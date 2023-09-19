@@ -2,7 +2,7 @@
 --------------------------
 Submitting an ERA5 request
 --------------------------
-This code downloads ~13GB of data from the ERA5 datasets
+This code downloads ~13GB of data from the ERA5 datasets. This could take a few hours.
 
 -------------------
 Install CDS API key
