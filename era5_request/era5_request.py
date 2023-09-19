@@ -44,8 +44,14 @@ def era5_req(era5ds, days, months, years, spatial_bounds, filename, pressure_lev
     c.retrieve(era5_datasets[era5ds], attr, filename)
 
 # make ERA5 data request according to a specified event number 'ev_num'.
-def submit_request(era5_dataset, year, eventised_observations, destination_dir='', init_pressure_level=0):
+def submit_request(era5_dataset, year, eventised_observations, destination_dir='', init_pressure_level=0, init_event=0, fin_event=0):
     data = eventised_observations
+
+    if init_event != 0:
+        data = data.where(data['Event'] >= init_event)
+    if fin_event != 0:
+        data = data.where(data['Event'] <= fin_event)
+
     era5_dir = 'era5_{}.{}'.format(era5_dataset, year)
     destination_path = os.path.join(destination_dir, era5_dir)
 
