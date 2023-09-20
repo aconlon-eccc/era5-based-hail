@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 import re, os
 import time
 
-def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20):
+def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
     file_name_format = 'era5.event_*.h5'
     tic = time.perf_counter()
     # get list of file paths
@@ -86,7 +86,7 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
         print('Elapsed time {:0.2f}hrs'.format(tictoc))
         if tictoc < time_limit:
             # get file name for ERA5 data of event
-            file_name = 'event_{}.h5'.format(event)
+            file_name = 'era5.event_{}.h5'.format(event)
             file = os.path.join(era5_dir, file_name)
 
             # load ERA5 data of event
@@ -251,7 +251,7 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
 
                 file_count += 1
 
-                if (file_count % 5) == 0:
+                if (file_count % save_freq) == 0:
                     # merge dictionnaries
                     x_dict.update(y_dict)
                     event_dict.update(x_dict)
