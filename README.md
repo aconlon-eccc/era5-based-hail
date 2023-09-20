@@ -1,13 +1,20 @@
 # era5-based-hail
 Hail prediction using machine learning trained on ERA5 data
 
+## Workflow
+This README has been aranged in the indended workflow. Here it is at a glance: 
+
+> 1. eventise hail observations
+> 2. submit ERA5 requests 
+> 3. eventise ERA5 data 
+> 4. create machine-learning dataset
 
 ## Eventise hail observation data
 Use 
 ['data_processing/eventise_data.observations'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
 .
 
-We have a csv file of 7000 hail reports from all over Canada between 2005 and 2022 called 
+We have a csv file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
 ['hail_db_with_LD.csv'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/hail_db_with_LD.csv)
 .
 
@@ -73,19 +80,19 @@ Below is an example of the output for a ~1.3GB request submitted to the
 ['reanalysis-era5-single-levels'](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) 
 ERA5 dataset for year 2022 of our hail observations, note the amount of time between timestamps of each step.
 
-2023-09-14 10:24:12,294 INFO Welcome to the CDS
-
-2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
-
-2023-09-14 10:24:12,495 INFO Request is queued
-
-2023-09-14 10:24:17,674 INFO Request is running
-
-2023-09-14 11:00:42,448 INFO Request is completed
-
-2023-09-14 11:00:42,448 INFO Downloading
-
-2023-09-14 11:10:18,343 INFO Download rate 2.8M/s
+> 2023-09-14 10:24:12,294 INFO Welcome to the CDS
+> 
+> 2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
+> 
+> 2023-09-14 10:24:12,495 INFO Request is queued
+> 
+> 2023-09-14 10:24:17,674 INFO Request is running
+> 
+> 2023-09-14 11:00:42,448 INFO Request is completed
+> 
+> 2023-09-14 11:00:42,448 INFO Downloading
+> 
+> 2023-09-14 11:10:18,343 INFO Download rate 2.8M/s
 
 Requests to the 
 ['reanalysis-era5-pressure-levels'](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) 
@@ -119,4 +126,33 @@ If you think this may be necessary, open the 'ERA5_Based_Hail' directory in your
 
 'venv\Scripts\activate' (if you are a Windows user)
 
-Then enter the installation command above. For more information see [Xarray installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html).
+Then enter the installation command above. For more information see 
+[Xarray installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
+.
+
+## Creating a dataset for machine-learning
+
+Use 
+['data_processing/create_ml_dataset.build_hail_ds_nans'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
+
+In the example 
+['examples/create_ml_dataset.ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_ml_dataset.ex.py) 
+, we use the eventised ERA5 data to populate a csv file that describes hourly conditions up to six hours before and three after the start time of each hail report. The csv file created has 1268 columns which includes location and hail severity information.
+
+Building the csv file for all 7000 hail reports is a long process, so I included a 
+['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+argument to 
+['build_hail_ds_nans'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) 
+. When the run-time reaches the time limit, it saves the csv file as-is to make sure processes are saved. The process can be picked up by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
+['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+to that event + 1. Note that 
+['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+is set to 5.5 hours by default because the system I use has a six hour job-time limit. You will need to find out the time limit of your system (if it has one) and set 
+['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+accordingly. 
+
+One can also split this job into chunks by using the initial and final event arguments 
+['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+and 
+['fin_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
+, respectively. 
