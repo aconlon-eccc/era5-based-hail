@@ -1,7 +1,6 @@
 # era5-based-hail
 Hail prediction using machine learning trained on ERA5 data
 
---------------------------
 
 ## Eventise hail observation data
 Use 
