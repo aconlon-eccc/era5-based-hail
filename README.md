@@ -66,7 +66,7 @@ from start to finish. The request made by our function
 ['era5_request.submit_request'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
 is somewhat of a greedy one. We request data for all points in time and space *between* events as well as for the events themselves. This ensures gathering a healthy amount of data for examples of null-events (no hail).
 
-Below is an example of the output for a request to the 
+Below is an example of the output for a ~1.3GB request submitted to the 
 ['reanalysis-era5-single-levels'](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) 
 ERA5 dataset for year 2022 of our hail observations, note the amount of time between timestamps of each step.
 
