@@ -2,7 +2,9 @@
 --------------------------
 Submitting an ERA5 request
 --------------------------
-This code downloads ~13GB of data from the ERA5 datasets. This could take a few hours.
+The total data for 2022 is ~13GB. This could take a several hours to complete depending on how busy the ERA5 servers
+are with requests from other users. The code below downloads ~4.4MB which takes about 20 minutes to complete, depending
+on ERA5 server activity.
 
 -------------------
 Install CDS API key
