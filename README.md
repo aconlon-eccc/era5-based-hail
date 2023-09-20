@@ -139,13 +139,29 @@ In the example
 ['examples/create_ml_dataset.ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_ml_dataset.ex.py) 
 , we use the eventised ERA5 data to populate a csv file that describes hourly conditions up to six hours before and three after the start time of each hail report. The csv file created has 1268 columns which includes location and hail severity information.
 
-Building the csv file for all 7000 hail reports is a long process, so I included a 
+Building the csv file for all 7000 hail reports is a long process, so 
+[build_hail_ds_nans'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
+saves its progress to a csv file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' in the user-specified directory 
+['destination_ir'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+for every 5 reports it processes. To change the frequency at which progress is saved, set the argument
+'save_freq'
+to desired frequency
+.
+
+so I included a 
 ['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 argument to 
 ['build_hail_ds_nans'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) 
-. When the run-time reaches the time limit, it saves the csv file as-is to make sure processes are saved. The process can be picked up by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
+. When the run-time reaches the time limit, it saves the csv file as-is, to a file called 
+'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' 
+to make sure processes are saved. The process can be picked up by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
 ['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
-to that event + 1. Note that 
+to that event + 1. 
+['build_hail_ds_nans'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) 
+also saves its progress to a csv file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' for every 50 reports it processes. To change the frequency at which progress is saved, change to desired frequency 
+[here](https://github.com/aconlon-eccc/era5-based-hail/blob/e0beeae18fb9b6b8c882ec937440f6fd247970bf/data_processing/create_ml_dataset.py#L254C17-L254C20)
+.
+Note that 
 ['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 is set to 5.5 hours by default because the system I use has a six hour job-time limit. You will need to find out the time limit of your system (if it has one) and set 
 ['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
