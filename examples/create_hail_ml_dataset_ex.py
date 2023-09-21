@@ -1,14 +1,14 @@
 """
 **Creating a dataset for machine-learning**
 
-Use 'data_processing/create_ml_dataset.build_hail_ds_nans'
+Use 'data_processing/create_ml_dataset.hail_ds'
 
 Here we use the eventised ERA5 data to populate a csv file that describes hourly conditions up to six hours before and
 three after the start time of each hail report. The csv file created has 1268 columns which includes location and hail
 severity information.
 
 Building the csv file for all 7000 hail reports is a long process, so I included a 'time_limit' argument to
-'build_hail_ds_nans' to make sure processes are saved before being timed out on whatever system you are using. Note
+'hail_ds' to make sure processes are saved before being timed out on whatever system you are using. Note
 that 'time_limit' is set to 5.5 hours by default because of the system I use. You will need to find out the time limit
 of your system (if it has one) and set 'time_limit' accordingly.
 
