@@ -10,9 +10,10 @@ from scipy.interpolate import interp1d
 import re, os
 import time
 
-def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+def hail_ds(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
     file_name_format = 'era5.event_*.h5'
     tic = time.perf_counter()
+
     # get list of file paths
     files = glob.glob(era5_dir + file_name_format)
     files.sort()
@@ -20,9 +21,6 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
     # extract first and last event from list of file paths
     era5_data_events = [int(re.search('(.*)era5.event_(.*).h5', file).group(2)) for file in files]
     era5_data_events.sort()
-
-    #era5_data_events = [int(files[i][-7:-3]) for i in range(len(files))]
-    # first_event = era5_data_events[0]
 
     # load clean eventised data
     data = pd.read_csv(obs_path)
@@ -33,9 +31,6 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
     event_range = np.arange(ini_ev, fin_ev + 1)
     event_list = data['Event'].where((data['Event'] >= ini_ev)).dropna()
     event_list = event_list.where(event_list <= fin_ev).dropna().astype(int).unique()
-
-    # init_ev_ind = np.where(event_list == ini_ev)[0][0]
-    # fin_ev_ind = np.where(event_list == fin_ev)[0][0]
 
     # create dictionary with appropriate headers to be turned into pandas dataframe
     ## pressure level dependent variables
@@ -76,11 +71,9 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
         y_dict[y] = []
     y_dict['severe'] = []
 
-    # mu_cape_trouble = {'event': [], 'report': [], 'lat': [], 'lon': [], 'time': []}
     # populate dictionaries
     file_count = 0
     for event in event_list:
-        last_ev = event
         toc = time.perf_counter()
         tictoc = (toc - tic)/(60*60)
         print('Elapsed time {:0.2f}hrs'.format(tictoc))
@@ -100,13 +93,9 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
 
                 # get latitude window
                 rep_lat = sub_data['Latitude'].iloc[ind]
-                # s_lat = sub_data['Latitude'].iloc[ind] - 0.25
-                # e_lat = s_lat + 0.5
 
                 # get longitude window
                 rep_lon = sub_data['Longitude'].iloc[ind]
-                # s_lon = sub_data['Longitude'].iloc[ind] - 0.25
-                # e_lon = s_lon + 0.5
 
                 # get time window
                 rep_s_tme = dt.strptime(sub_data['Start Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
@@ -141,11 +130,9 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
                 else:
                     y_dict['severe'].append(0)
 
-
                 t_count = 0
                 for t in tmes:
                     print('Working on event {}, report {} of {} at time step {} of {}'.format(event, ind + 1, len(sub_data.index), t_count+1, len(sub_ds.time)))
-
 
                     rep_ds = sub_ds.sel(time=t)
 
@@ -227,6 +214,7 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
                     rh = DA.r[::-1] * units.percent
                     dewpoint = dewpoint_from_relative_humidity(temperature, rh)
 
+                    # set mu-cape and -cin to 'NAN' if calculation raises error
                     try:
                         mu_cape, mu_cin = most_unstable_cape_cin(p, temperature, dewpoint)
                         x_dict['cape.t{}'.format(t_count)].append(mu_cape.magnitude)
@@ -246,7 +234,6 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
                         x_dict['cape_depth_90.t{}'.format(t_count)].append(cape_depth_90)
                         x_dict['cin_depth_90.t{}'.format(t_count)].append(cin_depth_90)
 
-
                     t_count+=1
 
                 file_count += 1
@@ -257,37 +244,23 @@ def build_hail_ds_nans(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=
                     event_dict.update(x_dict)
 
                     # create dataframe containing all data
-
                     df = pd.DataFrame(data=event_dict)
                     fn = destination_dir + 'partial_ml_dataset.{}_{}.csv'.format(ini_ev, fin_ev)
                     df.to_csv(fn, index=False)
                     print('saved partial hail ds')
                     print(fn)
 
-
+        # if time limit is reached
         else:
-            # create dataframes for train/test split
-            # x_df = pd.DataFrame(data=x_dict)
-            # x_df.to_csv(destination_dir + 'partial_x_hail_nans_dataset.{}_{}.csv'.format(ini_ev, fin_ev), index=False)
-            # y_df = pd.DataFrame(data=y_dict)
-            # y_df.to_csv(destination_dir + 'partial_y_hail_nans_dataset.{}_{}.csv'.format(ini_ev, fin_ev), index=False)
-
-            # merge dictionnaries
+            # merge x, y, and event dictionnaries
             x_dict.update(y_dict)
             event_dict.update(x_dict)
 
             # create dataframe containing all data
             df = pd.DataFrame(data=event_dict)
             df.to_csv(destination_dir + 'partial_ml_dataset.{}_{}.csv'.format(ini_ev, fin_ev), index=False)
-    # mu_cape_trouble_df = pd.DataFrame(data=mu_cape_trouble)
-    # mu_cape_trouble_df.to_csv(destination_dir + 'mu_cape_trouble2.csv', index=False)
 
-    # create dataframes for train/test split
-    x_df = pd.DataFrame(data=x_dict)
-    # x_df.to_csv(destination_dir + 'partial_x_hail_nans_dataset.{}_{}.csv'.format(ini_ev, fin_ev), index=False)
-    y_df = pd.DataFrame(data=y_dict)
-    # y_df.to_csv(destination_dir + 'partial_y_hail_nans_dataset.{}_{}.csv'.format(ini_ev, fin_ev), index=False)
-
+    # run completed, save csv
     # merge dictionnaries
     x_dict.update(y_dict)
     event_dict.update(x_dict)
