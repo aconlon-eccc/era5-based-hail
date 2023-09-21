@@ -18,5 +18,4 @@ respectively.
 
 import data_processing.create_ml_dataset as cmd
 
-
 cmd.hail_ds('eventised_obs.csv', 'era5_2022.by_event.10', ini_ev=2898)
