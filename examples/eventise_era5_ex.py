@@ -4,8 +4,8 @@ Eventise ERA5 data
 ------------------
 Use 'ERA5_Based_Hail.data_processing.eventise_data.era5'.
 
-In this example we breakup the ERA5 data we downloaded in the 'era5_request.ex.py' example into events according to
-the events we created for the hail reports in the 'eventise_observations.ex.py' example. The data surrounding an event
+In this example we breakup the ERA5 data we downloaded in the 'era5_request_ex.py' example into events according to
+the events we created for the hail reports in the 'eventise_observations_ex.py' example. The data surrounding an event
 in the single level and pressure level ERA5 data are merged into a single file and saved to a directory called
 'era5.by_event'. A parent directory can be specified for 'era5.by_event' using the argument
 'destination_dir_path' of the 'ERA5_Based_Hail.data_processing.eventise_data.era5' function.

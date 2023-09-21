@@ -48,7 +48,7 @@ from data_processing import load_eventised_observations as load_obs
 from era5_request import era5_request as er
 
 # load eventised observations data
-eventised_observations = load_obs.load_obs('eventised_obs.csv') # for details see 'eventise_observations.ex.py'
+eventised_observations = load_obs.load_obs('eventised_obs.csv') # for details see 'eventise_observations_ex.py'
 
 # request data from the ERA5 'reanalysis-era5-single-levels' ('sl') for year 2022
 er.submit_request('sl', 2022, eventised_observations, init_event=2898)
