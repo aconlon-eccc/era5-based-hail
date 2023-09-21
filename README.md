@@ -126,8 +126,8 @@ If you think this may be necessary, open the 'ERA5_Based_Hail' directory in your
 
     'venv\Scripts\activate'
 
-Then enter the installation command above. For more information see 
-[Xarray installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
+Then enter the installation command above. For more information see `Xarray` 
+[installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
 ## Creating a dataset for machine-learning
