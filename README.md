@@ -130,8 +130,8 @@ Then enter the installation command above. For more information see `Xarray`
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
-## Creating a dataset for machine-learning
-
+## Creating datasets for machine-learning
+### Hail size and classification
 Use 
 ['data_processing/create_ml_dataset.hail_ds'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
 
@@ -171,3 +171,6 @@ One can also split this job into chunks by using the initial and final event arg
 and 
 ['fin_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 , respectively. 
+
+### Hail detection
+COMING SOON...
