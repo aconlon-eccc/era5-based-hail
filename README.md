@@ -154,7 +154,7 @@ accordingly.
 I also included a 
 ['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 argument. When the run-time reaches the time limit, a csv file saves the progress as-is, to a file called 
-['partial_ml_dataset.{ini_ev}__{fin_ev}.csv'](https://github.com/aconlon-eccc/era5-based-hail/blob/e0beeae18fb9b6b8c882ec937440f6fd247970bf/examples/ml_dataset.2898_2899.csv) 
+['partial_ml_dataset.{ini_ev}__{fin_ev}.csv'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/ml_dataset.2898_2899.csv) 
 to make sure processes are saved. The process can be picked up again by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
 ['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 to that event + 1.  
