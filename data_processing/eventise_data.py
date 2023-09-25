@@ -8,6 +8,7 @@ import os
 import constants_and_variables as cv
 import data_processing.load_eventised_observations as load_data
 import new_dir as nd
+from itertools import cycle
 
 event_time_window=cv.event_time_window
 event_spatial_window=cv.event_spatial_window
@@ -180,3 +181,97 @@ def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destinati
             new_ds.to_netcdf(new_file_path, engine='h5netcdf', invalid_netcdf=True)
 
             new_ds.close()
+
+# def null(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0, fin_event=0):
+#
+#     try:
+#         sl_ds = xr.open_dataset(sl_file_path)
+#     except ValueError as p:
+#         raise Exception("Path provided for 'sl_file_path' does not exist.").with_traceback(p.__traceback__)
+#
+#     eventised_observations = load_data.load_obs(eventised_observations_path)
+#
+#     eventised_dir = 'era5_{}.null_event'.format(year)
+#     dest = os.path.join(destination_dir_path, eventised_dir)
+#     dest = nd.make_dir(dest)
+#
+#     obs_data = eventised_observations.where(eventised_observations['Year'] == year).dropna(how='all')
+# # check if we are starting from a specific event within the year (useful if program was interrupted)
+#     obs_data = obs_data.where(obs_data['Event'] >= init_event).dropna(how='all')
+# # check if we are working until the final event of the specified year
+#     if fin_event != 0:
+#         obs_data = obs_data.where(obs_data['Event'] <= init_event).dropna(how='all')
+#
+#  # retrieve event IDs from user-specified year
+#     event_list = obs_data['Event']
+#     last_event = max(event_list)
+#     event_cycle = cycle(event_list)
+#     running = True
+#     while running:
+#         for event in event_cycle:
+#             # time
+#             fin_time = min(obs_data['Start Timedelta'].where(obs_data['Event'] == next(event_cycle)).dropna()) - timedelta(
+#                 hours=event_time_window)
+#             ini_time = max(obs_data['End Timedelta'].where(obs_data['Event'] == event).dropna()) + timedelta(
+#                 hours=event_time_window)
+#
+#             # longitude
+#             event_lons = obs_data['Longitude'].where(obs_data['Event'] == event).dropna()
+#             min_lon = min(event_lons) - np.rad2deg(boundary_dist)
+#             max_lon = max(event_lons) + np.rad2deg(boundary_dist)
+#
+#             # latitude
+#             event_lats = obs_data['Latitude'].where(obs_data['Event'] == event).dropna()
+#             min_lat = min(event_lats) - np.rad2deg(boundary_dist)
+#             max_lat = max(event_lats) + np.rad2deg(boundary_dist)
+#
+#             # ensure bounds do not go out of range of era5 sl data
+#             ini_time = max(ini_time, min(sl_ds.time))
+#             fin_time = min(fin_time, max(sl_ds.time))
+#
+#             min_lon = max(min_lon, min(sl_ds.longitude))
+#             max_lon = min(max_lon, max(sl_ds.longitude))
+#
+#             min_lat = max(min_lat, min(sl_ds.latitude))
+#             max_lat = min(max_lat, max(sl_ds.latitude))
+#
+#             # slice single dataset according to bounds
+#             sl_ds = sl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
+#                               latitude=slice(max_lat, min_lat))
+#
+#             # open first pressure level dataset
+#             pl_file_path = os.path.join(pl_dir_path, 'era5_pl.{}.{}.h5'.format(year, 0))
+#
+#             # open pressure level dataset
+#             try:
+#                 pl_ds = xr.open_dataset(pl_file_path)
+#             except ValueError as p:
+#                 raise Exception("Path provided for 'pl_dir_path' does not exist.").with_traceback(p.__traceback__)
+#
+#             # slice pressure level dataset according to bounds
+#             pl_ds = pl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
+#                               latitude=slice(max_lat, min_lat))
+#
+#             # merge single level and pressure level sliced datasets
+#             new_ds = xr.merge([sl_ds, pl_ds])
+#
+#             for pl_step in range(1, num_level_steps):
+#                 # open first pressure level dataset
+#                 pl_file_path = os.path.join(pl_dir_path, 'era5_pl.{}.{}.h5'.format(year, pl_step))
+#
+#                 # open pressure level dataset
+#                 try:
+#                     pl_ds = xr.open_dataset(pl_file_path)
+#                 except ValueError as p:
+#                     raise Exception("Path provided for 'pl_dir_path' does not exist.").with_traceback(p.__traceback__)
+#
+#                 # slice pressure level dataset according to bounds
+#                 pl_ds = pl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
+#                             latitude=slice(max_lat, min_lat))
+#
+#                 # merge single level and pressure level sliced datasets
+#                 new_ds = xr.merge([new_ds, pl_ds])
+#                 new_file_path = os.path.join(dest, 'era5.event_{}.h5'.format(int(event)))
+#                 new_ds.to_netcdf(new_file_path, engine='h5netcdf', invalid_netcdf=True)
+#
+#                 new_ds.close()
