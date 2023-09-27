@@ -272,7 +272,7 @@ def hail_ds(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_lim
 
     return df
 
-def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', time_limit=5.5, save_freq=50):
     tic = time.perf_counter()
 
     # create dictionary with appropriate headers to be turned into pandas dataframe
@@ -320,12 +320,6 @@ def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', ini_ev=0
     except ValueError as p:
         raise Exception("Path provided for 'sl_file_path' does not exist.").with_traceback(p.__traceback__)
 
-    # file_count = 0
-    # running = True
-    # while running:
-    # populate dictionaries
-    # if file_count == num_reports:
-    #     running = False
     for null_rep in range(num_reports):
         # file_count +=1
         toc = time.perf_counter()
@@ -339,8 +333,6 @@ def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', ini_ev=0
             # create dataframe containing all data
             df = pd.DataFrame(data=event_dict)
             df.to_csv(destination_dir + 'partial_null_ml_dataset.{}.csv'.format(num_reports), index=False)
-
-            # running = False
 
         # choose random lat/lon/times
         t_len = 0
@@ -528,6 +520,8 @@ def full_ds(obs_path, eventised_era5_dir_path, sl_file_path, pl_dir_path, num_re
     full_df = pd.concat([null_df, hail_df])
     fn = os.path.join(destination_dir, 'full_ml_dataset.{}.csv'.format(num_reports))
     full_df.to_csv(fn, index=False)
+
+    return full_df
 
 
 
