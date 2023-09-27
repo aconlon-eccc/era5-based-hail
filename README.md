@@ -1,169 +1,223 @@
 # era5-based-hail
-Hail prediction using machine learning trained on `ERA5` data
+Hail prediction using machine learning trained on `ERA5` data.
 
 ## Workflow
 This README has been aranged in the indended workflow. Here it is at a glance: 
 
-> 1. eventise hail observations
-> 2. submit ERA5 requests 
-> 3. eventise ERA5 data 
-> 4. create machine-learning dataset
+ 1. eventise hail observations
+ 2. submit ERA5 requests 
+ 3. eventise ERA5 data 
+ 4. create machine-learning datasets
 
 ## Eventise hail observation data
 Use 
-['data_processing/eventise_data.observations'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
-.
+[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
+;
+```python
+def observations(file_name, destination_file_name=''):
+```
 
-We have a csv file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
-['hail_db_with_LD.csv'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/hail_db_with_LD.csv)
+We have a CSV file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
+[`hail_db_with_LD.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/hail_db_with_LD.csv)
 .
 
 Some of these reports are from the same hail event, that is a single hail storm produces multiple reports from different
 locations. We would like to bundle reports into hail 'events' based on the time of the report and the distances between reports. Our function 
-['data_processing/eventise_data.observations'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
-does this for us. I have provided the example
-['examples/eventise_observations_ex](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
-.
+[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
+does this for us by adding an `Event` column to `hail_db_with_LD.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
+[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
+:
+```python
+import data_processing.eventise_data as ed
 
-Different reports are considered to be of the same hail event according to time and space windows which are defined in 
-['constants_and_variables'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py)
-. Specifically, 
-['data_processing/eventise_data.observations'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
-uses the constants 
-['event_time_window'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L1), 
-['event_spatial_window'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L2), 
-['earth_rad'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L3), 
+eventised_hail_data = ed.observations('hail_db_with_LD.csv')
+```
+
+Different reports are considered to be of the same hail event if they are within a specified time and space windows, defined in 
+[`constants_and_variables`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py)
+. Specifically, the
+[`observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
+function uses the constants 
+[`event_time_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L1), 
+[`event_spatial_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L2), 
+[`earth_rad`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L3), 
 and 
-['boundary_distance'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L4)
-. If different time and space constants are desired, changes should be made to the 
-['constants_and_variables'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py) 
-file, keeping in mind units.
+[`boundary_distance`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L4)
+. If different time and space constants are desired, changes can be made to the 
+[`constants_and_variables`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py) 
+file, keeping in mind units. 
 
+## ERA5 data download
+The hail events created in the section above serve as spacial and temporal boundaries for each year of interest; 
+
+The first event of 2022 is `Event 2612` and is comprised of a single hail report. 
+
+**TBC...**
 
 ## Submitting an ERA5 request
 Use 
-['era5_request/submit_request'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
-. Requires an eventised observation file created using 
-['data_processing/eventise_data.observations'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
-see
-['examples/eventise_observations_ex](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
-for an example of how to use.
+[`era5_request/era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
+;
+```python
+def submit_request(era5_dataset, year, eventised_observations, destination_dir='', init_pressure_level=0, init_event=0, fin_event=0):
+```
+This requires an eventised observation file created using 
+[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
+, see the `Eventise hail observation data` section above and
+[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
+for an example of how to obtain such a file.
 
-The total ERA5 data download for 2022 is ~13GB. This could take a several hours to complete depending on how busy the ERA5 servers
-are with requests from other users. The code in 
-['examples/era5_request_ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request.ex.py) 
-downloads ~4.4MB which takes about 20 minutes to complete depending on ERA5 server activity. The example downloads ERA5 data for only two events in 2022 instead of downloading data for all 287 events in 2022.
+The total ERA5 data download for 2022 is **~13GB**. This can take a several hours to complete depending on how busy the ERA5 servers
+are. The example 
+[`examples/era5_request_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request.ex.py)
+,
+```python
+from data_processing import load_eventised_observations as load_obs
+from era5_request import era5_request as er
 
+# load eventised observations data
+eventised_observations = load_obs.load_obs('eventised_obs.csv') # for details see 'eventise_observations_ex.py'
+
+# request data from the ERA5 'reanalysis-era5-single-levels' ('sl') for year 2022
+er.submit_request('sl', 2022, eventised_observations, init_event=2898)
+
+# request data from the ERA5 'reanalysis-era5-single-levels' ('pl') for year 2022
+er.submit_request('pl', 2022, eventised_observations, init_event=2898)
+```
+downloads ~4.4MB which takes about 20 minutes to complete depending on ERA5 server activity. The example downloads ERA5 data for only two events, `Event 2898` and the final `Event 2899`, in 2022 instead of downloading data for all 287 events present in 2022.
 
 ### Install CDS API key
-Before anything, see 
+Before staring anything, see 
 ['How to use the CDS API'](https://cds.climate.copernicus.eu/api-how-to) 
 for instructions on installing your unique CDS API key.
-
 
 ### ERA5 datasets
 There are two datasets to choose from, 
 [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
 and 
 [`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview)
-, which have been abbreviated to 'sl' and 'pl', respectively.
-
+, which have been abbreviated to `sl` and `pl`, respectively.
 
 ### Data requests
 Receiving the data you have requested from ERA5 can take some time. It depends on a couple things; how many other users
 are requesting data at that time and how much data you have requested. Your request will first be queued with other
 users, then ERA5 will run your request, and finally the download will begin. The request made by our function 
-['era5_request.submit_request'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
+[`era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
 is somewhat of a greedy one. We request data for all points in time and space *between* events as well as for those for the events themselves. This ensures that we gather gathering a healthy amount of null-event data (no-hail) for training.
 
 Below is an example of the output for a ~1.3GB request submitted to the 
-['reanalysis-era5-single-levels'](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) 
+[`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) 
 ERA5 dataset for year 2022 of our hail observations, note the amount of time between timestamps of each step.
-
-> 2023-09-14 10:24:12,294 INFO Welcome to the CDS
-> 
-> 2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
-> 
-> 2023-09-14 10:24:12,495 INFO Request is queued
-> 
-> 2023-09-14 10:24:17,674 INFO Request is running
-> 
-> 2023-09-14 11:00:42,448 INFO Request is completed
-> 
-> 2023-09-14 11:00:42,448 INFO Downloading
-> 
-> 2023-09-14 11:10:18,343 INFO Download rate 2.8M/s
-
+```
+2023-09-14 10:24:12,294 INFO Welcome to the CDS
+2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
+2023-09-14 10:24:12,495 INFO Request is queued
+2023-09-14 10:24:17,674 INFO Request is running
+2023-09-14 11:00:42,448 INFO Request is completed
+2023-09-14 11:00:42,448 INFO Downloading
+2023-09-14 11:10:18,343 INFO Download rate 2.8M/s
+```
 Requests to the 
-['reanalysis-era5-pressure-levels'](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) 
+[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) 
 ERA5 dataset are broken-up into 10 requests split by pressure levels to ensure maximum file limits set by ERA5 on data requests are respected. See 
-['constants_and_variables.pressure_levels'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L30) 
+[`constants_and_variables.pressure_levels`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L30) 
 for the pressure level breakdown.
 
 
 ## Eventise ERA5 data
 
 Use 
-['data_processing/eventise_data.era5'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93)
+[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93)
 .
 
 In the example 
-['examples/eventise_era5_ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_era5_ex.py) 
+[`examples/eventise_era5_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_era5_ex.py) 
 we breakup the ERA5 data we downloaded in the 
-['examples/era5_request_ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request_ex.py) 
+[`examples/era5_request_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request_ex.py) 
 example into events according to the events we created for the hail reports in the 
-['examples/eventise_observations_ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
+[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
 example. The data surrounding an event in the single-level and pressure-level ERA5 data are merged into a single event file and saved to a directory called 'era5.by_event'. A parent directory to 'era5.by_event' can be specified by using the argument 'destination_dir_path' of the 
-['data_processing/eventise_data.era5'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
+[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
 function.
 
 Opening the '.h5' files acquired from ERA5 may require installing additional dependencies to xarray. I use PyCharm on
 my local machine and had to pass the following installation command:
-
-    ' pip install "xarray[io]" '
-
-If you think this may be necessary, open the 'ERA5_Based_Hail' directory in your command prompt and enter the command (if you are a Windows user):
-
-    'venv\Scripts\activate'
-
+```
+pip install "xarray[io]"
+```
+If you think this may be necessary, open the 'ERA5_Based_Hail' directory in your command prompt and enter the command (for Windows users):
+```
+venv\Scripts\activate
+```
 Then enter the installation command above. For more information see `Xarray` 
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
 ## Creating datasets for machine-learning
-### Hail size and classification
+### For hail size and classification
 Use 
-['data_processing/create_ml_dataset.hail_ds'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
+[`data_processing/create_ml_dataset.hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
+;
+```python
+def hail_ds(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+```
 
 In the example 
-['examples/create_hail_ml_dataset_ex'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_hail_ml_dataset_ex.py) 
+[`examples/create_hail_ml_dataset_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_hail_ml_dataset_ex.py) 
+,
+```python
+import data_processing.create_ml_dataset as cmd
+
+cmd.hail_ds('eventised_obs.csv', 'era5_2022.by_event.10', ini_ev=2898)
+```
 , we use the eventised ERA5 data to populate a csv file that describes hourly conditions up to six hours before and three after the start time of each hail report. The csv file created has 1268 columns which includes location and hail severity information.
 
 Building the csv file for all 7000 hail reports is a long process, so 
-[hail_ds'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
+[`hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
 saves its progress to a csv file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' in the user-specified directory 
-['destination_dir'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`destination_dir`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 for every 50 reports it processes. To change the frequency at which progress is saved, set the argument
-['save_freq'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
+[`save_freq`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 to desired frequency. Note that 
-['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 is set to 5.5 hours by default because the system I use has a six hour job-time limit. You will need to find out the time limit of your system (if it has one) and set 
-['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 accordingly.
 
 I also included a 
-['time_limit'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 argument. When the run-time reaches the time limit, a csv file saves the progress as-is, to a file called 
-['partial_ml_dataset.{ini_ev}__{fin_ev}.csv'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/ml_dataset.2898_2899.csv) 
+[`partial_ml_dataset.{ini_ev}__{fin_ev}.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/ml_dataset.2898_2899.csv) 
 to make sure processes are saved. The process can be picked up again by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
-['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`ini_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 to that event + 1.  
 
 One can also split this job into chunks by using the initial and final event arguments 
-['ini_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
+[`ini_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 and 
-['fin_ev'](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
+[`fin_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 , respectively. 
 
-### Hail detection
-COMING SOON...
+### For hail detection
+#### Null-case dataset
+Use 
+[`data_processing/create_ml_dataset.null_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L275)
+;
+```python
+def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', time_limit=5.5, save_freq=50):
+```
+
+The `null_ds` function randomly samples a latitude, a longitude, and a consecutive set of ten timestamps from the single-level ERA5 NetCDF through the user-provided `sl_file_path`. It then creates sub-datasets of the single-level and pressure-level ERA5 data using the randomly sampled information and merges these sub-datasets. The merged sub-dataset is used to fill-in a dataframe with the same columns as the one in `hail_ds` (see above). The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` saves it's progress according to `save_freq`,  as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir`, and has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
+
+#### Full dataset (hail & null cases)
+Use
+[`data_processing/create_ml_dataset.full_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L518)
+;
+```python
+def full_ds(obs_path, eventised_era5_dir_path, sl_file_path, pl_dir_path, num_reports, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+```
+The `full_ds` function combines `hail_ds` and `null_ds` functions to create a dataset of both hail and null cases. It returns the dataset as a `pandas.DataFrame` when finished and saves the full dataset as `full_ml_dataset{num_reports}.csv` in `destination_dir`, where `num_reports` is the number of null-cases. 
+
+
+
+
