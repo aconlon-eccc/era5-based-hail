@@ -1,7 +1,8 @@
 """
-------------------
 Eventise ERA5 data
-------------------
+
+==================
+
 Use 'ERA5_Based_Hail.data_processing.eventise_data.era5'.
 
 In this example we breakup the ERA5 data we downloaded in the 'era5_request_ex.py' example into events according to
