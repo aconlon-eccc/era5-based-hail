@@ -91,9 +91,10 @@ def observations(file_name, destination_file_name=''):
     return group_reports()
 
 
-def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0,
+def era5(year, eventised_observations_path, sl_dir_loc='', pl_dir_loc='', destination_dir_path='', init_event=0,
          fin_event=0):
 
+    sl_file_path = os.path.join(sl_dir_loc, 'era5_sl', 'era5_sl.{}.h5'.format(year))
     try:
         sl_ds = xr.open_dataset(sl_file_path)
     except ValueError as p:
@@ -147,6 +148,7 @@ def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destinati
                           latitude=slice(max_lat, min_lat))
 
         # open first pressure level dataset
+        pl_dir_path = os.path.join(pl_dir_loc, 'era5_pl', 'era5_pl.{}'.format(year))
         pl_file_path = os.path.join(pl_dir_path, 'era5_pl.{}.{}.h5'.format(year, 0))
 
         # open pressure level dataset
