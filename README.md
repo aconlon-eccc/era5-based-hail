@@ -7,7 +7,11 @@ In this README, the first section titled `Main workflow` has been aranged in the
 ## Table of contents
  1. Main workflow 
      1. [Eventise hail observations](#eventise-hail-observation-data)
-     2. Submit ERA5 requests
+     2. [ERA5 data download](#era5-data-download)
+         1. [Install CDS API key](#install-cds-api-key)
+         2. [ERA5 datasets](#era5-datasets)
+         3. [Submiting ERA5 data requests](#submiting-era5-data-requests)
+         4. [Details on ERA5 data](#details-on-era5-data)
      3. Create machine-learning datasets
  2. Other functions
      1. Eventise ERA5 data
@@ -67,7 +71,7 @@ and
 , which have been abbreviated to `sl` and `pl`, respectively.
 
 ---
-### Data requests
+### Submiting ERA5 data requests
 Use 
 [`era5_request/era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
 ;
@@ -121,7 +125,7 @@ er.submit_request('sl', 2022, eventised_observations, init_event=2898)
 er.submit_request('pl', 2022, eventised_observations, init_event=2898)
 ```
 ---
-### Details on ERA5 data requested
+### Details on ERA5 data
 
 The hail events created `eventise_data.observations` serve as temporal boundaries for each year of interest. For example, in 2022 the first and last events are `Event 2612` and `Event 2899` and are comprised of a single hail reports with the following relavent information:
 
@@ -151,30 +155,26 @@ boundary_distance = event_spatial_window / (2 * earth_rad)  # spatial window in 
 and where `event_spatial_window` and `earth_rad` are defined in `km` in `constants_and_variables`. 
 
 ---
-## Eventise ERA5 data
-
-Use 
-[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93)
-.
-```python
-def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0, fin_event=0):
-```
-
-In the example 
-[`examples/eventise_era5_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_era5_ex.py) 
-we breakup the downloaded ERA5 data from
-[`examples/era5_request_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request_ex.py) 
-into events according to the events we created for the hail reports in the 
-[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
-example. The data surrounding an event in the single-level and pressure-level ERA5 data are merged into a single event file and saved to a directory called 'era5_{year}.by_event'. A parent directory to 'era5_{year}.by_event' can be specified by using the argument 'destination_dir_path' of the 
-[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
-function.
-
-Opening the '.h5' files acquired from ERA5 may require installing additional dependencies to xarray. I use PyCharm on
+## Creating datasets for machine-learning
+Opening the `.h5` files acquired from ERA5 may require installing additional dependencies to `Xarray`. I use `PyCharm` on
 my local machine and had to pass the following installation command:
 ```
 pip install "xarray[io]"
 ```
+Here is an exerpt from the `Xarray` 
+[installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
+page that mentions the potential need for the line above
+
+> We also maintain other dependency sets for different subsets of functionality:
+> ```
+> python -m pip install "xarray[io]"        # Install optional dependencies for handling I/O
+> python -m pip install "xarray[accel]"     # Install optional dependencies for accelerating xarray
+> python -m pip install "xarray[parallel]"  # Install optional dependencies for dask arrays
+> python -m pip install "xarray[viz]"       # Install optional dependencies for visualization
+> python -m pip install "xarray[complete]"  # Install all the above
+> ```
+
+
 If you think this may be necessary, open the 'ERA5_Based_Hail' directory in your command prompt and enter the command (for Windows users):
 ```
 venv\Scripts\activate
@@ -182,9 +182,6 @@ venv\Scripts\activate
 Then enter the installation command above. For more information see `Xarray` 
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
-
----
-## Creating datasets for machine-learning
 ### For hail size and classification
 Use 
 [`data_processing/create_ml_dataset.hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
@@ -251,6 +248,25 @@ def full_ds(obs_path, eventised_era5_dir_path, sl_file_path, pl_dir_path, num_re
 ```
 The `full_ds` function combines `hail_ds` and `null_ds` functions to create a dataset of both hail and null cases. It returns the dataset as a `pandas.DataFrame` when finished and saves the full dataset as `full_ml_dataset{num_reports}.csv` in `destination_dir`, where `num_reports` is the number of null-cases. 
 
+---
+## Other functions
+### Eventise ERA5 data
 
+Use 
+[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93)
+.
+```python
+def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0, fin_event=0):
+```
+
+In the example 
+[`examples/eventise_era5_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_era5_ex.py) 
+we breakup the downloaded ERA5 data from
+[`examples/era5_request_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/era5_request_ex.py) 
+into events according to the events we created for the hail reports in the 
+[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py) 
+example. The data surrounding an event in the single-level and pressure-level ERA5 data are merged into a single event file and saved to a directory called 'era5_{year}.by_event'. A parent directory to 'era5_{year}.by_event' can be specified by using the argument 'destination_dir_path' of the 
+[`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
+function.
 
 
