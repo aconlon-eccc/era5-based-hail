@@ -6,7 +6,7 @@ In this README, the first section titled `Main workflow` has been aranged in the
 ---
 ## Table of contents
  1. Main workflow 
-     1. [Eventise hail observations](##eventise-hail-observation-data)
+     1. [Eventise hail observations](#eventise-hail-observation-data)
      2. Submit ERA5 requests
      3. Create machine-learning datasets
  2. Other functions
