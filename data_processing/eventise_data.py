@@ -8,16 +8,15 @@ import os
 import constants_and_variables as cv
 import data_processing.load_eventised_observations as load_data
 import new_dir as nd
-from itertools import cycle
 
-event_time_window=cv.event_time_window
-event_spatial_window=cv.event_spatial_window
-earth_rad=cv.earth_rad
-boundary_dist=cv.boundary_distance
-num_level_steps=len(cv.pressure_levels)
+event_time_window = cv.event_time_window
+event_spatial_window = cv.event_spatial_window
+earth_rad = cv.earth_rad
+boundary_dist = cv.boundary_distance
+num_level_steps = len(cv.pressure_levels)
+
 
 def observations(file_name, destination_file_name=''):
-
     if destination_file_name == '':
         destination_file_name = 'eventised_obs.csv'
 
@@ -43,7 +42,7 @@ def observations(file_name, destination_file_name=''):
         dt_format = '%m/%d/%Y %H:%M'  # set dt_format to the format printed above
         data['Temp Start Timedelta'] = [dt.strptime(startDate, dt_format) for startDate in
                                         data[
-                                            'Start Time']]  # create new column in our data table called 'Start timedelta'
+                                            'Start Time']]  # create new column in data table called 'Start timedelta'
         na_index = data['End Time'].index[
             data['End Time'].apply(pd.isna)]  # list of indexes of NaN values in 'End Time' column
         data['End Time'] = np.where(pd.isna(data['End Time']), data['Start Time'],
@@ -91,7 +90,9 @@ def observations(file_name, destination_file_name=''):
 
     return group_reports()
 
-def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0, fin_event=0):
+
+def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destination_dir_path='', init_event=0,
+         fin_event=0):
 
     try:
         sl_ds = xr.open_dataset(sl_file_path)
@@ -111,7 +112,7 @@ def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destinati
     if fin_event != 0:
         obs_data = obs_data.where(obs_data['Event'] <= init_event).dropna(how='all')
 
- # retrieve event IDs from user-specified year
+    # retrieve event IDs from user-specified year
     event_list = obs_data['Event']
 
     for event in event_list:
@@ -173,7 +174,7 @@ def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destinati
 
             # slice pressure level dataset according to bounds
             pl_ds = pl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
-                        latitude=slice(max_lat, min_lat))
+                              latitude=slice(max_lat, min_lat))
 
             # merge single level and pressure level sliced datasets
             new_ds = xr.merge([new_ds, pl_ds])
@@ -181,4 +182,3 @@ def era5(year, eventised_observations_path, sl_file_path, pl_dir_path, destinati
             new_ds.to_netcdf(new_file_path, engine='h5netcdf', invalid_netcdf=True)
 
             new_ds.close()
-

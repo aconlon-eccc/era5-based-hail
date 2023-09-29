@@ -7,8 +7,9 @@ from metpy.calc import bulk_shear, wind_speed, mixed_layer_cape_cin, geopotentia
 from metpy.calc import dewpoint_from_relative_humidity, wet_bulb_temperature
 from metpy.units import units
 from scipy.interpolate import interp1d
-import re, os
-import time, random
+import os
+import time
+import random
 
 # def hail_ds(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
 #     file_name_format = 'era5.event_*.h5'
