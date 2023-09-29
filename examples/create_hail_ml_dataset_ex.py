@@ -16,6 +16,8 @@ One can also split this job into chunks by using the initial and final event arg
 respectively.
 """
 
-import data_processing.create_ml_dataset as cmd
+import data_processing.create_ml_dataset as cd
 
-cmd.hail_ds('eventised_obs.csv', 'era5_2022.by_event.10', ini_ev=2898)
+cd.hail_ds_no_event(ini_ev=2898)
+
+# cmd.hail_ds('eventised_obs.csv', 'era5_2022.by_event.10', ini_ev=2898)

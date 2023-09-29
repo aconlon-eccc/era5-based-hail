@@ -52,21 +52,20 @@ def submit_request(era5_dataset, year, eventised_observations, destination_dir='
     if fin_event != 0:
         data = data.where(data['Event'] <= fin_event)
 
-    era5_dir = 'era5_{}.{}'.format(era5_dataset, year)
+    era5_dir = 'era5_{}'.format(era5_dataset)
     destination_path = os.path.join(destination_dir, era5_dir)
+    try:
+        os.mkdir(destination_path)
+    except FileExistsError:
+        pass
 
-    def make_dir(path, nf=0):
-        new_path = path
-        if nf > 0:
-            new_path = '{}.{}'.format(path, nf)
-        try:
-            os.mkdir(new_path)
-            return new_path
-        except FileExistsError:
-            nf+=1
-            return make_dir(path, nf=nf)
+    if era5_dataset == 'pl':
+        destination_path = os.path.join(destination_path, 'era5_pl.{}'.format(year))
 
-    destination_path = make_dir(destination_path)
+    try:
+        os.mkdir(destination_path)
+    except FileExistsError:
+        pass
 
     era5ds = era5_dataset
     # finding min and max indices in data of reports of the specified year
