@@ -1,14 +1,18 @@
 # era5-based-hail
 Hail prediction using machine learning trained on `ERA5` data.
 
-## Workflow
-This README has been aranged in the indended workflow. Here it is at a glance: 
+In this README, the first section titled `Main workflow` has been aranged in the indended workflow to get from hail observation data to creating a large dataset for machine-learning applications. The second section title `Other functions` describes other potentially usefull functions that I created while deciding the best course of action for processing data.
 
- 1. eventise hail observations
- 2. submit ERA5 requests 
- 3. eventise ERA5 data 
- 4. create machine-learning datasets
+---
+## Table of contents
+ 1. Main workflow 
+     1. [Eventise hail observations](/era5-based-hail/master/README.md#table-of-contents)
+     2. Submit ERA5 requests
+     3. Create machine-learning datasets
+ 2. Other functions
+     1. Eventise ERA5 data
 
+---
 ## Eventise hail observation data
 Use 
 [`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
@@ -47,13 +51,14 @@ and
 [`constants_and_variables`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py) 
 file, keeping in mind units. 
 
+---
 ## ERA5 data download
-
 ### Install CDS API key
 Before staring anything, see 
 ['How to use the CDS API'](https://cds.climate.copernicus.eu/api-how-to) 
 for instructions on installing your unique CDS API key.
 
+---
 ### ERA5 datasets
 There are two datasets that we download from, 
 [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
@@ -61,6 +66,7 @@ and
 [`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview)
 , which have been abbreviated to `sl` and `pl`, respectively.
 
+---
 ### Data requests
 Use 
 [`era5_request/era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
@@ -114,7 +120,7 @@ er.submit_request('sl', 2022, eventised_observations, init_event=2898)
 # request data from the ERA5 'reanalysis-era5-single-levels' ('pl') for year 2022
 er.submit_request('pl', 2022, eventised_observations, init_event=2898)
 ```
-
+---
 ### Details on ERA5 data requested
 
 The hail events created `eventise_data.observations` serve as temporal boundaries for each year of interest. For example, in 2022 the first and last events are `Event 2612` and `Event 2899` and are comprised of a single hail reports with the following relavent information:
@@ -144,7 +150,7 @@ boundary_distance = event_spatial_window / (2 * earth_rad)  # spatial window in 
 ```
 and where `event_spatial_window` and `earth_rad` are defined in `km` in `constants_and_variables`. 
 
-
+---
 ## Eventise ERA5 data
 
 Use 
@@ -177,6 +183,7 @@ Then enter the installation command above. For more information see `Xarray`
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
+---
 ## Creating datasets for machine-learning
 ### For hail size and classification
 Use 
@@ -222,6 +229,7 @@ and
 [`fin_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 , respectively. 
 
+---
 ### For hail detection
 #### Null-case dataset
 Use 
@@ -233,6 +241,7 @@ def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', time_lim
 
 The `null_ds` function randomly samples a latitude, a longitude, and a consecutive set of ten timestamps from the single-level ERA5 NetCDF through the user-provided `sl_file_path`. It then creates sub-datasets of the single-level and pressure-level ERA5 data using the randomly sampled information and merges these sub-datasets. The merged sub-dataset is used to fill-in a dataframe with the same columns as the one in `hail_ds` (see above). The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` saves it's progress according to `save_freq`,  as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir`, and has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
 
+---
 #### Full dataset (hail & null cases)
 Use
 [`data_processing/create_ml_dataset.full_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L518)
