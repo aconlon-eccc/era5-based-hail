@@ -293,25 +293,3 @@ example. The data surrounding an event in the single-level and pressure-level ER
 [`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
 function.
 
----
-
----
-
----
-
-## Creating datasets for machine-learning
-
-
----
-
-### For hail size and classification
-
----
-
-### For hail detection (null-case datasets)
-
-
----
-
-#### Full dataset (hail & null-cases)
-
