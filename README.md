@@ -180,25 +180,51 @@ venv\Scripts\activate
 Then enter the installation command above. For more information see `Xarray` 
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
+
+We use the ERA5 data to populate a CSV file that describes hourly conditions up to six hours before (`T-6`) and three after (`T+3`) the start time (`T`) of each hail report. The CSV file created has 1268 columns which includes location and hail severity information. Below are the variables we collect for each time step, `[T-6, T+3]` 
+
+```python
+# pressure-level dependent variables
+plvar = ['r', 't', 'u', 'v', 'z']
+
+# single-level variables
+slvar = ['cp', 'd2m', 'sp', 't2m', 'tcc', 'tciw', 'tclw', 'tcrw', 'tcsw', 'tcw', 'tcwv', 'tp', 'u10', 'v10']
+
+# calculated indices
+indices = ['bulk_shear_0_6_km', 'bulk_shear_0_3_km', 'bulk_shear_0_1_km', 'mean_wind_1_3_km', 'lapse_rate_0_3_km',
+           'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
+
+# lightning data from hail data csv
+hail_x_data = ['LD']
+```
+Recall that the `plvar` variables have a value for each pressure level in `lvls`: 
+```python
+# pressure levels
+lvls = ['300', '350', '400', '450', '500', '550', '600', '650', '700', '750', '775', '800', '825', '850', '875',
+        '900', '925', '950', '975', '1000']
+```
+Variables that are collected for each timestep `[T-6, T+3]` are given the suffix `.ti` where `i = 0, 1, ..., 9`. For example, the vlaues for `relative_humidity` at pressure level `500 hPa` and timestep `2` are in column `r_500.t2`. These variables account for 1260 columns. The remaining 8 are: 
+```python
+remaining_eight = ['event', 'year', 'start_time', 'end_time', 'latitude', 'longitude', 'hail_size', 'severe']
+```
+
 ### For hail size and classification
 Use 
 [`data_processing/create_ml_dataset.hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
 ;
 ```python
-def hail_ds(obs_path, era5_dir, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', ini_year=0, fin_year=0, ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50)
 ```
 
-In the example 
+The example 
 [`examples/create_hail_ml_dataset_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_hail_ml_dataset_ex.py) 
-,
+is shown here:
 ```python
-import data_processing.create_ml_dataset as cmd
-
-cmd.hail_ds('eventised_obs.csv', 'era5_2022.by_event.10', ini_ev=2898)
+import data_processing.create_ml_dataset as cd
+cd.hail_ds(ini_ev=2898)
 ```
-, we use the eventised ERA5 data to populate a csv file that describes hourly conditions up to six hours before and three after the start time of each hail report. The csv file created has 1268 columns which includes location and hail severity information.
 
-Building the csv file for all 7000 hail reports is a long process, so 
+Building the CSV file for all 7000 hail reports is a long process, so 
 [`hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
 saves its progress to a csv file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' in the user-specified directory 
 [`destination_dir`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
@@ -231,10 +257,10 @@ Use
 [`data_processing/create_ml_dataset.null_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L275)
 ;
 ```python
-def null_ds(sl_file_path, pl_dir_path, num_reports, destination_dir='', time_limit=5.5, save_freq=50):
+def null_ds(num_reports, sl_dir_loc='', pl_dir_loc='', destination_dir='', time_limit=5.5, save_freq=50)
 ```
 
-The `null_ds` function randomly samples a latitude, a longitude, and a consecutive set of ten timestamps from the single-level ERA5 NetCDF through the user-provided `sl_file_path`. It then creates sub-datasets of the single-level and pressure-level ERA5 data using the randomly sampled information and merges these sub-datasets. The merged sub-dataset is used to fill-in a dataframe with the same columns as the one in `hail_ds` (see above). The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` saves it's progress according to `save_freq`,  as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir`, and has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
+The `null_ds` function randomly samples a `latitude`, a `longitude`, and a consecutive set of ten timestamps from the single-level ERA5 NetCDF through the user-provided `sl_file_path`. It then creates sub-datasets of the single-level and pressure-level ERA5 data using the randomly sampled information and merges these sub-datasets. The merged sub-dataset is used to fill-in a dataframe with the same columns as the one in `hail_ds` (see above). The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` saves it's progress according to `save_freq`,  as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir`, and has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
 
 ---
 #### Full dataset (hail & null cases)
@@ -242,7 +268,7 @@ Use
 [`data_processing/create_ml_dataset.full_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L518)
 ;
 ```python
-def full_ds(obs_path, eventised_era5_dir_path, sl_file_path, pl_dir_path, num_reports, destination_dir='', ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
+def full_ds(num_reports, sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', ini_year=0, fin_year=0, ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50)
 ```
 The `full_ds` function combines `hail_ds` and `null_ds` functions to create a dataset of both hail and null cases. It returns the dataset as a `pandas.DataFrame` when finished and saves the full dataset as `full_ml_dataset{num_reports}.csv` in `destination_dir`, where `num_reports` is the number of null-cases. 
 
@@ -267,4 +293,25 @@ example. The data surrounding an event in the single-level and pressure-level ER
 [`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
 function.
 
+---
+
+---
+
+---
+
+## Creating datasets for machine-learning
+
+
+---
+
+### For hail size and classification
+
+---
+
+### For hail detection (null-case datasets)
+
+
+---
+
+#### Full dataset (hail & null-cases)
 
