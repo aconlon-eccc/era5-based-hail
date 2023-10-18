@@ -5,7 +5,7 @@ import numpy as np
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, r2_score
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.neighbors import KNeighborsClassifier
 import matplotlib.pyplot as plt
@@ -30,7 +30,6 @@ import random
 def get_train_val(val_size, source_ds, x_scaled=False):
     # load dataset
     ds = pd.read_csv(source_ds)
-    ds = ds.where(ds['year'] < 2022).dropna()
 
     # format start and end times in datetime objects
     dt_format = '%Y-%m-%d %H:%M:%S'  # set dt_format to the format printed above
@@ -40,11 +39,12 @@ def get_train_val(val_size, source_ds, x_scaled=False):
     ds['temp_end_time'] = [dt.strptime(endDate, dt_format) for endDate in ds['end_time']]
     ds['end_time'] = ds['temp_end_time']
 
-    ds = ds.drop(['temp_end_time', 'temp_start_time'], axis=1)
-
     # initial x/y split
-    x_tv = ds.drop(['event', 'severe', 'year'], axis=1)
-    y_tv = ds[['start_time', 'cape', 'LD', 'hail_size', 'severe']]
+    train_ds = ds.where(ds['year'] < 2022).dropna()
+    x_tv = train_ds.drop(['event', 'severe', 'year'], axis=1)
+
+    # keeping start_time, cape, and LD in target data for cleaning purposes below
+    y_tv = train_ds[['start_time', 'cape', 'LD', 'hail_size', 'severe']]
 
     if x_scaled:
         scaler = preprocessing.StandardScaler().fit(x_tv)
@@ -54,20 +54,23 @@ def get_train_val(val_size, source_ds, x_scaled=False):
     x_train, x_val, y_train, y_val = train_test_split(x_tv, y_tv, test_size=val_size)
 
     # clean training data
-    # x_train = x_train.where(x_train['year'] < 2022)
     x_train = x_train.where(x_train['cape'] > 0).where((x_train['LD'] > 0)).where((x_train['hail_size'] > 0)).where(
         (x_train['start_time'].dt.month < 11)).where((x_train['start_time'].dt.month > 4)).dropna()
     x_train = x_train.drop(['start_time', 'end_time', 'hail_size'], axis=1)
     x_val = x_val.drop(['start_time', 'end_time', 'hail_size'], axis=1)
 
-    # y_train = y_train.where(y_train['year'] < 2022)
     y_train = y_train.where(y_train['cape'] > 0).where((y_train['LD'] > 0)).where((y_train['hail_size'] > 0)).where(
         (y_train['start_time'].dt.month < 11)).where((y_train['start_time'].dt.month > 4)).dropna()
     y_train = y_train.drop(['start_time', 'cape', 'LD'], axis=1)
     y_val = y_val.drop(['start_time', 'cape', 'LD'], axis=1)
 
-    return x_train, x_val, y_train, y_val, x_tv
+    test_ds = ds.where(ds['year'] == 2022).dropna()
+    x_test = test_ds.drop(['start_time', 'end_time', 'hail_size', 'event', 'severe', 'year'], axis=1)
+    y_test = test_ds[['hail_size', 'severe']]
 
+    return x_train, x_val, y_train, y_val, x_tv, x_test, y_test
+
+#TODO: remove plot_confusion_matrix
 def plot_confusion_matrix(cm, model, vmin=0.0, vmax=1.0,classes=None, fn='max_confusion_matrix.png', destination_dir=None):
     # cm_norm = cm / cm.sum(axis=1)[:, np.newaxis]
     if classes is not None:
@@ -96,6 +99,7 @@ def plot_confusion_matrix(cm, model, vmin=0.0, vmax=1.0,classes=None, fn='max_co
     plt.savefig(destination_dir + fn)
     plt.close()
 
+#TODO: remove test_model
 def test_model(model, map, dest, source_ds):
     # load test data
     x_test = pd.read_csv(source_ds)
@@ -171,10 +175,17 @@ def feature_importance(rf, x_tv, dest):
 
     return final_fi
 
-def rf_clf_model(x_train, x_val, y_train, y_val, dest, max_depths=[None, 10, 20, 50, 75, 100, 125, 150, 175, 200], n_jobs=-1):
+def rf_clf_model(x_train, x_val, x_test, y_train, y_val, y_test, dest, max_depths=[None, 10, 20, 50, 75, 100, 125, 150, 175, 200], n_jobs=-1):
+    # using a max_accuracy_prod as evaluation metric. initialized to zero
     max_accuracy_prod = 0
+
+    # initialize best performing RF model
     max_rf = RandomForestClassifier()
+
+    # initialize predictions of best performing RF model
     max_pred = []
+
+    # search for best RF model
     for d in max_depths:
         rf = RandomForestClassifier(n_estimators=random.randint(100, 1000),
                                     criterion='entropy',
@@ -206,46 +217,67 @@ def rf_clf_model(x_train, x_val, y_train, y_val, dest, max_depths=[None, 10, 20,
             max_pred = pred_val
             max_rf = rf
 
+        # save scores and model parameters to dataframe
         com_sc = pd.DataFrame(
             {
              'max_depth': [d],
-             'train_score': [rf.score(x_train, y_train['severe'])],
-             'val_score': [rf.score(x_val, y_val['severe'])],
-             'cm_score': [accuracy_prod],
-             'true_positive': [cm[0][0]],
-             'false_positive': [cm[0][1]],
-             'false_negative': [cm[1][0]],
-             'true_negative': [cm[1][1]]
+             'train_r2_score': [rf.score(x_train, y_train['severe'])],
+             'val_r2_score': [rf.score(x_val, y_val['severe'])],
+             'edi': [accuracy_prod],
+             'pod': [pod],
+             'pofd': [pofd],
+             'true_negative': [C],
+             'false_positive': [F],
+             'false_negative': [M],
+             'true_positive': [H]
              }
         )
 
+        # fancy way of initializing, and adding to, the final dataframe holding details of all RF models produced in the search
         try:
             final_com_sc = pd.concat([final_com_sc, com_sc], ignore_index=True)
         except:
             final_com_sc = com_sc
 
-    final_com_sc = final_com_sc.sort_values('cm_score', ascending=False)
-    final_com_sc.to_csv(dest + 'rf_combination_scores.csv', index=False)
+    final_com_sc = final_com_sc.sort_values('edi', ascending=False)
+    final_com_sc.to_csv(os.path.join(dest, 'all_scores.csv'), index=False)
 
     # test scores
-    x_test = pd.read_csv(rep_source_dir + 'x_dirty_rep_test_dataset.csv')
-    y_test = pd.read_csv(rep_source_dir + 'y_dirty_rep_test_dataset.csv')
     pred_test = max_rf.predict(X=x_test)
     pred_test_df = y_test
     pred_test_df['prediction'] = pred_test
-    pred_test_df.to_csv(dest + 'rf_clf_test_pred.csv', index=False)
+    pred_test_df.to_csv(os.path.join(dest, 'test_pred.csv'), index=False)
 
     test_cm = confusion_matrix(y_test['severe'], pred_test)
 
-    classes = max_rf.classes_
-    plot_confusion_matrix(test_cm, 'Random Forest Classifier', classes, fn='rf_clf_rep_confusion_matrix.png', destination_dir=dest)
+    C = test_cm[0][0]
+    M = test_cm[1][0]
+    F = test_cm[0][1]
+    H = test_cm[1][1]
 
+    pod = H / (H + M)
+    pofd = F / (F + C)
+
+    num = np.log(pofd) - np.log(pod)
+    den = np.log(pofd) + np.log(pod)
+    edi = num / den
+
+    test_sc = pd.DataFrame(
+        data={
+            'edi': [edi],
+            'true_negative': [C],
+            'false_positive': [F],
+            'false_negative': [M],
+            'true_positive': [H]
+        })
+
+    test_sc.to_csv(os.path.join(dest, 'test_scores.csv'), index=False)
 
     # save rf parameters in human readable format
     params = max_rf.get_params()
     keys = list(params.keys())
     vals = list(params.values())
-    with open(rf_clf_destination_dir + "rf_clf_params.txt", "w") as text_file:
+    with open(os.path.join(dest, "max_rf_params.txt"), "w") as text_file:
         text_file.write('RandomForestClassifier : {')
         for i in range(len(keys)):
             text_file.write(str(keys[i]) + ': ' + str(vals[i]))
@@ -254,25 +286,37 @@ def rf_clf_model(x_train, x_val, y_train, y_val, dest, max_depths=[None, 10, 20,
 
     return max_rf, max_pred
 
-def rf_reg_model(x_train, x_val, y_train, y_val, max_depths=[None, 10, 20, 50, 75, 100], n_jobs=-1):
+def rf_reg_model(x_train, x_val, x_test, y_train, y_val, y_test, dest, max_depths=[None, 10, 20, 50, 75, 100], n_jobs=-1):
+    # using a max_accuracy_prod as evaluation metric. initialized to zero
     max_accuracy_prod = 0
+
+    # initialize best performing RF model
     max_rf = RandomForestRegressor()
+
+    # initialize predictions of best performing RF model
     max_pred = []
+
+    # search for best RF model
     for d in max_depths:
         rf = RandomForestRegressor(n_estimators=random.randint(100, 1000),
                                     max_features=None,
                                     max_depth=d,
                                     n_jobs=n_jobs,
                                     random_state=42)
+
+        # had issues with certain depths
         try:
             rf.fit(x_train, y_train['hail_size'])
         except TypeError:
             print('Value error for max_depth = {}'.format(d))
+
+        # had issues with columns matching in the training and validating training sets
         try:
             pred_val = rf.predict(X=x_val)
         except IndexError:
             print('IndexError. train cols = {}, val vols = {}'.format(len(x_train.columns), len(x_val.columns)))
 
+        # using built-in r^2 score to find best parameters for model
         accuracy_prod = rf.score(x_val, y_val['hail_size'])
         if accuracy_prod > max_accuracy_prod:
             print('new max: ', accuracy_prod)
@@ -280,36 +324,44 @@ def rf_reg_model(x_train, x_val, y_train, y_val, max_depths=[None, 10, 20, 50, 7
             max_pred = pred_val
             max_rf = rf
 
+        # save scores and model parameters to dataframe
         com_sc = pd.DataFrame(
             {
              'max_depth': [d],
-             'train_score': [rf.score(x_train, y_train['hail_size'])],
-             'val_score': [rf.score(x_val, y_val['hail_size'])],
-             'cm_score': [accuracy_prod]
+             'train_r2_score': [rf.score(x_train, y_train['hail_size'])],
+             'val_r2_score': [accuracy_prod]
              }
         )
-
+        # fancy way of initializing, and adding to, the final dataframe holding details of all RF models produced in the search
         try:
             final_com_sc = pd.concat([final_com_sc, com_sc], ignore_index=True)
         except:
             final_com_sc = com_sc
 
     final_com_sc = final_com_sc.sort_values('val_score', ascending=False)
-    final_com_sc.to_csv(rf_reg_destination_dir + 'rf_combination_scores.csv', index=False)
+    final_com_sc.to_csv(os.path.join(dest, 'rf_combination_scores.csv'), index=False)
 
     # save rf parameters in human readable format
     params = max_rf.get_params()
     keys = list(params.keys())
     vals = list(params.values())
-    with open(rf_reg_destination_dir + "rf_reg_params.txt", "w") as text_file:
+    with open(os.path.join(dest, "rf_reg_params.txt"), "w") as text_file:
         text_file.write('RandomForestRegressor : {')
         for i in range(len(keys)):
             text_file.write(str(keys[i]) + ': ' + str(vals[i]))
         text_file.write('}')
         text_file.close()
 
+    # test scores
+    pred_test = max_rf.predict(X=x_test)
+    pred_test_df = y_test
+    pred_test_df['prediction'] = pred_test
+    pred_test_df['r2_score'] = [r2_score(y_test, pred_test)]
+    pred_test_df.to_csv(os.path.join(dest, 'test_pred.csv'), index=False)
+
     return max_rf, max_pred
 
+#TODO: look into removing evaluate
 def evaluate(model, test_features, test_labels, map):
     predictions = model.predict(test_features)
     errors = abs(predictions - test_labels)
@@ -321,6 +373,7 @@ def evaluate(model, test_features, test_labels, map):
 
     return np.mean(errors), accuracy
 
+#TODO: look into removing EDI
 def EDI(model, x_test, y_test):
     y_pred = model.predict(X=x_test)
     y_true = y_test
@@ -497,6 +550,7 @@ def rf_kfold(n_iter=5, cv=5, clean_features=True, map='classification', n_jobs=[
 
     feature_importance(max_rf, x_train, dest)
 
+#TODO: find out what the fs suffix means
 def rf_kfold_fs(n_iter=5, cv=5, clean_features=True, map='classification', n_jobs=[-1], feat_list = [], dest=''):
     # Number of trees in random forest
     n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=20)]
@@ -674,33 +728,29 @@ def rf_kfold_fs(n_iter=5, cv=5, clean_features=True, map='classification', n_job
         return rf_kfold_fs(n_iter=n_iter, cv=cv, clean_features=clean_features, map=map, n_jobs=n_jobs, feat_list=feat_list, dest=dest)
 
 def rf(source_dataset, val_size=0.25, map='classification', dest=''):
-    x_train, x_val, y_train, y_val, x_tv = get_train_val(source_ds=source_dataset, val_size=val_size)
+    # split data into training and validation data where x_tv is a dataframe composed of x_train and x_val
+    x_train, x_val, y_train, y_val, x_tv, x_test, y_test = get_train_val(source_ds=source_dataset, val_size=val_size)
 
     x_tv = x_tv.drop(['start_time', 'end_time', 'hail_size'], axis=1)
 
-    # find optimal rf model and create unique model name
+    # find optimal rf model and create unique directory name for all files saved during optimal model search
     model_name = '.{}{}{}{}{}'.format(f'{dt.today().year:02}', f'{dt.today().month:02}', f'{dt.today().day:02}', f'{dt.today().hour:02}', f'{dt.today().minute:02}')
     if map == 'classification':
         model_name = 'rf_clf' + model_name
         dest = os.path.join(dest, model_name)
         os.mkdir(dest)
-        rf, pred = rf_clf_model(x_train, x_val, y_train, y_val, dest)
+        rf, pred = rf_clf_model(x_train, x_val, x_test, y_train, y_val, y_test, dest)
 
     else:
         model_name = 'rf_reg' + model_name
         dest = os.path.join(dest, model_name)
         os.mkdir(dest)
-        rf, pred = rf_reg_model(x_train, x_val, y_train, y_val, dest)
-
-    score = test_model(model=rf, map=map, dest=dest, source_ds=source_dataset)
-    s = open(os.path.join(dest, 'test_score.txt'), 'w')
-    s.write('Test score: {}'.format(score))
-    s.close()
+        rf, pred = rf_reg_model(x_train, x_val, x_test, y_train, y_val, y_test, dest)
 
     # calculate feature importance
     feature_importance(rf, x_tv, os.path.join(dest, 'feature_importance.csv'))
 
-    # save training and validation datasets to csv files
+    # save training and validation datasets to csv files for post-analysis / repeatability
     train_data = pd.concat([x_train, y_train], axis=1, join='inner')
     train_data.to_csv(os.path.join(dest, 'training_data.csv'), index=False)
 

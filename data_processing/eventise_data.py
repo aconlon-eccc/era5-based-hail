@@ -35,29 +35,17 @@ def observations(file_name, destination_file_name=''):
         return earth_rad * ca
 
     def group_reports():
-        data = pd.read_csv(file_name, index_col=0, na_values=float('nan'))
+        data = pd.read_csv(file_name, na_values=float('nan'))
         data = data.reset_index(drop=True)
 
         # create timedelta objects from report 'Start Time' and 'End Time' to help us compare times of reports
         dt_format = '%m/%d/%Y %H:%M'  # set dt_format to the format printed above
-        data['Temp Start Timedelta'] = [dt.strptime(startDate, dt_format) for startDate in
+        data['Start Timedelta'] = [dt.strptime(startDate, dt_format) for startDate in
                                         data[
                                             'Start Time']]  # create new column in data table called 'Start timedelta'
-        na_index = data['End Time'].index[
-            data['End Time'].apply(pd.isna)]  # list of indexes of NaN values in 'End Time' column
-        data['End Time'] = np.where(pd.isna(data['End Time']), data['Start Time'],
-                                    data['End Time'])  # replacing NaN values by 'Start Time' values
-        data['Temp End Timedelta'] = [dt.strptime(endDate, dt_format) for endDate in
-                                      data['End Time']]  # create new column in our data table called 'End timedelta'
-        data['Start Timedelta'] = np.where((data['Temp Start Timedelta'] <= data['Temp End Timedelta']),
-                                           data['Temp Start Timedelta'],
-                                           data['Temp End Timedelta'])
-        data['End Timedelta'] = np.where((data['Temp Start Timedelta'] >= data['Temp End Timedelta']),
-                                         data['Temp Start Timedelta'],
-                                         data['Temp End Timedelta'])
-        data.loc[na_index, 'End Time'] = float('nan')  # reset appropriate 'End Time' values back to NaN
-        # sort data by 'End Timedelta'
-        data = data.sort_values(by='End Timedelta')
+
+        # sort data by 'Start Timedelta'
+        data = data.sort_values(by='Start Timedelta')
         data = data.reset_index(drop=True)
 
         dist = 0
@@ -72,7 +60,7 @@ def observations(file_name, destination_file_name=''):
         event = 0  # initializing the event counter
         events = [event]  # initializing the list of event IDs
         for i in range(len(data) - 1):
-            tdist = data['Start Timedelta'][i + 1] - data['End Timedelta'][i]
+            tdist = data['Start Timedelta'][i + 1] - data['Start Timedelta'][i]
             if tdist > timedelta(hours=event_time_window):
                 event += 1
             else:
@@ -83,6 +71,8 @@ def observations(file_name, destination_file_name=''):
             events.append(event)
         data['Event'] = events
         print('Number of events: ', max(events) + 1)
+
+        data = data.drop(columns={'Start Timedelta'})
 
         data.to_csv(destination_file_name, index=False)
 
@@ -120,7 +110,7 @@ def era5(year, eventised_observations_path, sl_dir_loc='', pl_dir_loc='', destin
         # time
         ini_time = min(obs_data['Start Timedelta'].where(obs_data['Event'] == event).dropna()) - timedelta(
             hours=event_time_window)
-        fin_time = max(obs_data['End Timedelta'].where(obs_data['Event'] == event).dropna()) + timedelta(
+        fin_time = max(obs_data['Start Timedelta'].where(obs_data['Event'] == event).dropna()) + timedelta(
             hours=event_time_window)
 
         # longitude

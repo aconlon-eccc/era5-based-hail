@@ -20,7 +20,7 @@ and space constants are desired, changes should be made to the 'constants_and_va
 
 import data_processing.eventise_data as ed
 
-eventised_hail_data = ed.observations('hail_db_with_LD.csv')
+eventised_hail_data = ed.observations('integrated_canadian_hail_db.csv')
 
 
 
