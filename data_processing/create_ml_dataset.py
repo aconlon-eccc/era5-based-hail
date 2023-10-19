@@ -129,7 +129,8 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
 
                 # get time window
                 rep_s_tme = dt.strptime(sub_data['Start Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
-                rep_e_tme = dt.strptime(sub_data['End Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
+                # rep_e_tme = dt.strptime(sub_data['End Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
+                rep_e_tme = rep_s_tme
 
                 tme = sl_ds.sel(time=rep_s_tme, method='nearest').time
 
