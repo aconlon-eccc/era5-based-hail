@@ -68,10 +68,10 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
     else:
         data = data.where(data['Event'] <= fin_ev).dropna(how='all')
 
-    # set pl file folder path
+    # set pressure-level file folder path
     pl_dir_path = os.path.join(pl_dir_loc, 'era5_pl')
 
-    # get sl file names
+    # get single-level file names
     sl_files_path = os.path.join(sl_dir_loc, 'era5_sl', 'era5_sl.*.h5')
     sl_files = glob.glob(sl_files_path)
 
