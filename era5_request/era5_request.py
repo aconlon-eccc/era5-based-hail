@@ -87,7 +87,7 @@ def submit_request(era5_dataset, year, eventised_observations, destination_dir='
     ini_rep_time = data['Start Timedelta'][min_yr_ind] - timedelta(hours=event_time_window)
 
     # computing the final time of the temporal window
-    fin_time = data['End Timedelta'][max_yr_ind] + timedelta(hours=event_time_window + 1)
+    fin_time = data['Start Timedelta'][max_yr_ind] + timedelta(hours=event_time_window + 1)
 
     # taking the floor and ceiling in days of the initial and final times, respectively, of the temporal window
     # that is, ini_time = '15:00, April 15, 2023' goes to '00:00, April 15, 2023'

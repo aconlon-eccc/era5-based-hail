@@ -134,7 +134,7 @@ def era5(year, eventised_observations_path, sl_dir_loc='', pl_dir_loc='', destin
         max_lat = min(max_lat, max(sl_ds.latitude))
 
         # slice single dataset according to bounds
-        sl_ds = sl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
+        sl_ev_ds = sl_ds.sel(time=slice(ini_time, fin_time), longitude=slice(min_lon, max_lon),
                           latitude=slice(max_lat, min_lat))
 
         # open first pressure level dataset
@@ -152,7 +152,7 @@ def era5(year, eventised_observations_path, sl_dir_loc='', pl_dir_loc='', destin
                           latitude=slice(max_lat, min_lat))
 
         # merge single level and pressure level sliced datasets
-        new_ds = xr.merge([sl_ds, pl_ds])
+        new_ds = xr.merge([sl_ev_ds, pl_ds])
 
         for pl_step in range(1, num_level_steps):
             # open first pressure level dataset

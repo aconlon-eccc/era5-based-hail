@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 import os
 import time
 import random
+from data_processing.load_eventised_observations import load_obs
 
 
 def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', ini_year=0, fin_year=0, ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50):
@@ -31,7 +32,7 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
                'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
 
     ## indicators from hail data csv
-    hail_x_data = ['LD']
+    # hail_x_data = ['LD']
     hail_y_data = ['hail_size']
 
     ## create dictionaries
@@ -50,8 +51,8 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
             x_dict['{}.t{}'.format(slvr, t)] = []
         for ind in indices:
             x_dict['{}.t{}'.format(ind, t)] = []
-        for hdi in hail_x_data:
-            x_dict['{}.t{}'.format(hdi, t)] = []
+        # for hdi in hail_x_data:
+        #     x_dict['{}.t{}'.format(hdi, t)] = []
 
     for y in hail_y_data:
         y_dict[y] = []
@@ -60,7 +61,7 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
     # load eventised data
     if obs_file_path == '':
         obs_file_path = 'eventised_obs.csv'
-    data = pd.read_csv(obs_file_path)
+    data = load_obs(obs_file_path)
 
     data = data.where(data['Event'] >= ini_ev).dropna(how='all')
     if fin_ev == 0:
@@ -128,7 +129,7 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
                 rep_lon = sub_data['Longitude'].iloc[ind]
 
                 # get time window
-                rep_s_tme = dt.strptime(sub_data['Start Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
+                rep_s_tme = sub_data['Start Timedelta'].iloc[ind]
                 # rep_e_tme = dt.strptime(sub_data['End Timedelta'].iloc[ind], '%Y-%m-%d %H:%M:%S')
                 rep_e_tme = rep_s_tme
 
@@ -155,7 +156,7 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
                 event_dict['longitude'].append(rep_lon)
 
                 # insert hail size for report
-                hs = sub_data['Hail Diameter (mm) FINAL'].iloc[ind]
+                hs = sub_data['Hail Diameter (mm)'].iloc[ind]
                 y_dict['hail_size'].append(hs)
 
                 # insert severity
@@ -173,7 +174,7 @@ def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', 
                                                                                               len(sub_ds.time)))
 
                     # insert lightning data for report
-                    x_dict['LD.t{}'.format(t_count)].append(sub_data['LD'].iloc[ind])
+                    # x_dict['LD.t{}'.format(t_count)].append(sub_data['LD'].iloc[ind])
 
                     # flatten sliced dataset
                     DA = sub_ds.sel(time=t)

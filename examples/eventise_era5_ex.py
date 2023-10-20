@@ -33,6 +33,5 @@ sl_file_path='era5_sl.2022.3/era5_sl.2022.h5'
 pl_dir_path='era5_pl.2022.1'
 init_event=2898
 
-eventise.era5(year=year, eventised_observations_path=obs_path, sl_file_path=sl_file_path, pl_dir_path=pl_dir_path,
-              init_event=init_event)
+eventise.era5(year=year, eventised_observations_path=obs_path, init_event=2898)
 
