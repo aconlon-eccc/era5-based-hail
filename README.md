@@ -292,3 +292,5 @@ into events according to the events we created for the hail reports in the
 example. The data surrounding an event in the single-level and pressure-level ERA5 data are merged into a single event file and saved to a directory called 'era5_{year}.by_event'. A parent directory to 'era5_{year}.by_event' can be specified by using the argument 'destination_dir_path' of the 
 [`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
 function.
+
+
