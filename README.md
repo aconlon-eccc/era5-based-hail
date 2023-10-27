@@ -1,7 +1,7 @@
 # era5-based-hail
 Hail prediction using machine learning trained on `ERA5` data.
 
-In this README, the first section titled `Main workflow` has been aranged in the indended workflow to get from hail observation data to creating a large dataset for machine-learning applications. The second section title `Other functions` describes other potentially usefull functions that I created while deciding the best course of action for processing data.
+In this README, the `Main workflow` section has been aranged in the indended workflow to get from hail observation data to creating a large dataset for machine-learning applications. The second section `Other functions` describes other potentially usefull functions that I created while deciding the best course of action for processing data.
 
 ---
 ## Table of contents
