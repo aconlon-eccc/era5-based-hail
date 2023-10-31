@@ -6,7 +6,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import confusion_matrix, r2_score
 import random
-from ML import get_train_val, feature_importance, source_ds, test_model, evaluate, EDI
+from ML.ML import get_train_val, feature_importance, test_model, evaluate, EDI
 
 # Random Forest Classifier called by rf function below
 def rf_clf_model(x_train, x_val, x_test, y_train, y_val, y_test, dest, max_depths=[None, 10, 20, 50, 75, 100, 125, 150, 175, 200], n_jobs=-1):
@@ -197,7 +197,7 @@ def rf_reg_model(x_train, x_val, x_test, y_train, y_val, y_test, dest, max_depth
     return max_rf, max_pred
 
 # Random Forest k-fold Classifier or Regressor (by specifying 'map') on all features in source_dataset
-def rf_kfold(source_dataset=source_ds, dest='', n_iter=5, cv=5, clean_features=True, map='classification', n_jobs=[-1]):
+def rf_kfold(source_dataset, dest='', n_iter=5, cv=5, clean_features=True, map='classification', n_jobs=[-1]):
     # Number of trees in random forest
     n_estimators = [int(x) for x in np.linspace(start=10, stop=100, num=20)]
     # Number of features to consider at every split
@@ -351,9 +351,11 @@ def rf_kfold(source_dataset=source_ds, dest='', n_iter=5, cv=5, clean_features=T
 
     feature_importance(max_rf, x_train, dest)
 
+    return max_rf
+
 # Random Forest k-fold Classifier or Regressor (by specifying 'map') trained on top 10 performing features by iteratively
 # calling rf_kfold_fs (i.e. is a recursive function which returns a model trained on 10 most important features)
-def rf_kfold_fs(source_dataset=source_ds, n_iter=5, cv=5, clean_features=True, map='classification', n_jobs=[-1], feat_list = [], dest=''):
+def rf_kfold_fs(source_dataset, dest='', n_iter=5, cv=5, num_features=10, clean_features=True, map='classification', n_jobs=[-1], feat_list = []):
     # Number of trees in random forest
     n_estimators = [int(x) for x in np.linspace(start=100, stop=1000, num=20)]
     # Number of features to consider at every split
@@ -525,39 +527,51 @@ def rf_kfold_fs(source_dataset=source_ds, n_iter=5, cv=5, clean_features=True, m
     print()
     print(fi)
     print()
-    if len(fi.index) > 10:
+    if len(fi.index) > num_features:
         feat_list = [fi.iloc[g].name for g in range(int(np.floor(len(fi.index) / 2)), len(fi.index))]
         return rf_kfold_fs(n_iter=n_iter, cv=cv, clean_features=clean_features, map=map, n_jobs=n_jobs, feat_list=feat_list, dest=dest)
-
-def rf(val_size=0.25, map='classification', dest=''):
-    # split data into training and validation data where x_tv is a dataframe composed of x_train and x_val
-    x_train, x_val, y_train, y_val, x_tv, x_test, y_test = get_train_val(val_size=val_size)
-
-    x_tv = x_tv.drop(['start_time', 'end_time', 'hail_size'], axis=1)
-
-    # find optimal rf model and create unique directory name for all files saved during optimal model search
-    model_name = '.{}{}{}{}{}'.format(f'{dt.today().year:02}', f'{dt.today().month:02}', f'{dt.today().day:02}', f'{dt.today().hour:02}', f'{dt.today().minute:02}')
-    if map == 'classification':
-        model_name = 'rf_clf' + model_name
-        dest = os.path.join(dest, model_name)
-        os.mkdir(dest)
-        rf, pred = rf_clf_model(x_train, x_val, x_test, y_train, y_val, y_test, dest)
-
     else:
-        model_name = 'rf_reg' + model_name
-        dest = os.path.join(dest, model_name)
-        os.mkdir(dest)
-        rf, pred = rf_reg_model(x_train, x_val, x_test, y_train, y_val, y_test, dest)
+        return max_rf
 
-    # calculate feature importance
-    feature_importance(rf, x_tv, os.path.join(dest, 'feature_importance.csv'))
+def rf(source_ds, dest='', val_size=0.25, map='classification', kfold=False, n_iter=5, cv=5,
+       most_important_features=False, num_features=10, clean_features=True,
+       max_depths=[None, 10, 20, 50, 75, 100, 125, 150, 175, 200]):
+    if kfold:
+        if most_important_features:
+            return rf_kfold_fs(source_dataset=source_ds, dest=dest, n_iter=n_iter, cv=cv, num_features=num_features,
+                        clean_features=clean_features, map=map, n_jobs=[-1], feat_list=[])
+        else:
+            return rf_kfold_fs(source_dataset=source_ds, dest=dest, n_iter=n_iter, cv=cv, clean_features=clean_features,
+                        map=map, n_jobs=[-1])
+    else:
+        # split data into training and validation data where x_tv is a dataframe composed of x_train and x_val
+        x_train, x_val, y_train, y_val, x_tv, x_test, y_test = get_train_val(source_ds=source_ds, val_size=val_size)
 
-    # save training and validation datasets to csv files for post-analysis / repeatability
-    train_data = pd.concat([x_train, y_train], axis=1, join='inner')
-    train_data.to_csv(os.path.join(dest, 'training_data.csv'), index=False)
+        x_tv = x_tv.drop(['start_time', 'end_time', 'hail_size'], axis=1)
 
-    pred_df = pd.DataFrame(data=pred, columns=['predicted'])
-    val_data = pd.concat([x_val, y_val, pred_df], axis=1, join='inner')
-    val_data.to_csv(os.path.join(dest, 'validation_data.csv'), index=False)
+        # find optimal rf model and create unique directory name for all files saved during optimal model search
+        model_name = '.{}{}{}{}{}'.format(f'{dt.today().year:02}', f'{dt.today().month:02}', f'{dt.today().day:02}', f'{dt.today().hour:02}', f'{dt.today().minute:02}')
+        if map == 'classification':
+            model_name = 'rf_clf' + model_name
+            dest = os.path.join(dest, model_name)
+            os.mkdir(dest)
+            rf, pred = rf_clf_model(x_train, x_val, x_test, y_train, y_val, y_test, dest, max_depths=max_depths)
 
-    return rf
+        else:
+            model_name = 'rf_reg' + model_name
+            dest = os.path.join(dest, model_name)
+            os.mkdir(dest)
+            rf, pred = rf_reg_model(x_train, x_val, x_test, y_train, y_val, y_test, dest)
+
+        # calculate feature importance
+        feature_importance(rf, x_tv, os.path.join(dest, 'feature_importance.csv'))
+
+        # save training and validation datasets to csv files for post-analysis / repeatability
+        train_data = pd.concat([x_train, y_train], axis=1, join='inner')
+        train_data.to_csv(os.path.join(dest, 'training_data.csv'), index=False)
+
+        pred_df = pd.DataFrame(data=pred, columns=['predicted'])
+        val_data = pd.concat([x_val, y_val, pred_df], axis=1, join='inner')
+        val_data.to_csv(os.path.join(dest, 'validation_data.csv'), index=False)
+
+        return rf

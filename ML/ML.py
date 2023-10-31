@@ -7,9 +7,10 @@ from sklearn.model_selection import train_test_split
 
 source_ds = 'full_rep_dataset.csv'
 
-def get_train_val(val_size, x_scaled=False):
+def get_train_val(val_size, source_ds, x_scaled=False):
     # load dataset
     ds = pd.read_csv(source_ds)
+    test_ds = ds.where(ds['year'] == 2022).dropna()
     ds = ds.where(ds['year'] < 2022).dropna()
 
     # format start and end times in datetime objects
@@ -46,8 +47,7 @@ def get_train_val(val_size, x_scaled=False):
     y_train = y_train.drop(['start_time', 'cape', 'LD'], axis=1)
     y_val = y_val.drop(['start_time', 'cape', 'LD'], axis=1)
 
-    test_ds = ds.where(ds['year'] == 2022).dropna()
-    x_test = test_ds.drop(['start_time', 'hail_size', 'event', 'severe', 'year'], axis=1)
+    x_test = test_ds.drop(['start_time', 'end_time', 'hail_size', 'event', 'severe', 'year'], axis=1)
     y_test = test_ds[['hail_size', 'severe']]
 
     return x_train, x_val, y_train, y_val, x_tv, x_test, y_test
