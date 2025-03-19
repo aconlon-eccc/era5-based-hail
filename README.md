@@ -1,7 +1,7 @@
 # era5-based-hail
 Hail prediction using machine learning trained on ERA5 data.
 
-In this README, the `Main workflow` section has been aranged in the indended workflow to get from hail observation data to creating a large set of meteorological data for machine-learning (ML) applications; for training and testing ML models on meteorological data to predict extreme hail events. The second section `Other functions` describes other potentially useful functions that I created while deciding the best course of action for processing data but are no longer part of the main workflow.
+In this README, the `Main workflow` section has been aranged in the indended workflow to get from hail observation data to creating a large set of meteorological data for machine-learning (ML) applications; for training and testing ML models on meteorological data to predict extreme hail events. The second section `Other functions` describes other potentially useful functions that I created while deciding the best course of action for processing data but are no longer part of my main workflow.
 
 ---
 ## Table of contents
@@ -27,8 +27,8 @@ def observations(file_name, destination_file_name=''):
 
 We have a CSV file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
 [`hail_db_with_LD.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/hail_db_with_LD.csv)
-. Some of these reports are from the same hail event, that is a single hail storm produces multiple reports from different
-locations. We would like to bundle reports into hail 'events' based on the time of the report and the distances between reports. Our function 
+. Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports from different
+locations. We would like to bundle reports into hail 'events' based on the time of the report and the distances between reports - hence, 'eventise'. My function 
 [`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
 does this for us by adding an `Event` column to `hail_db_with_LD.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
 [`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
