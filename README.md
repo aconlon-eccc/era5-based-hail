@@ -75,14 +75,14 @@ and
 
 ---
 ### Submiting ERA5 data requests
-The function used for submitting ERA5 data download requests is: 
+The function used for submitting ERA5 data download requests is 
 [`era5_request/era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
-;
+:
 ```python
 def submit_request(era5_dataset, year, eventised_observations, destination_dir='', init_pressure_level=0, init_event=0, fin_event=0):
 ```
-It requires an eventised observation file created using 
-[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) as described in section 1.i.
+The download acquires data in netcdf format. Note that the `submit_request` function requires an eventised observation file created using 
+[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) as described in section 1.i. 
 
 Receiving the requested data can take some time and depends on a couple things: 
 - the number of current requests from other users
@@ -101,10 +101,25 @@ There are few approaches we can take when it comes to submitting requests:
 
 From what I learned, it's faster to make a few greedy requests than it is to go the granular route - the queues can take a long time. 
 
-The `submit_request` function builds a box around the min/max lat/long and the min/max times of the reports for a given year and submits a request to the ERA5 servers for that dataset. This means we gather all data points in time and space *between* events as well as for those for the events themselves. 
+The `submit_request` function builds a box around the min/max lat/long and the min/max times of the reports for a given year and submits a request to the ERA5 servers for that dataset. This means we gather all data points in time and space *between* events as well as for those for the events themselves.  
 
-Below is an example of the output for a request submitted to the [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) dataset for year 2022 of our hail observations. The total size of the request was about 1.3GB. Note the amount of time elapsed between timestamps.
+Here is the example I provided in the [examples](https://github.com/aconlon-eccc/era5-based-hail/tree/master/examples) folder where two requests are made; where a request is made for the dataset related to the final two events of year 2022: 
+```python
+from data_processing import load_eventised_observations as load_obs
+from era5_request import era5_request as er
 
+# load eventised observations data
+eventised_observations = load_obs.load_obs('eventised_obs.csv') # for details see 'eventise_observations_ex.py'
+
+# request data from the ERA5 'reanalysis-era5-single-levels' ('sl') for year 2022
+er.submit_request('sl', 2022, eventised_observations, init_event=2898)
+
+# request data from the ERA5 'reanalysis-era5-pressure-levels' ('pl') for year 2022
+er.submit_request('pl', 2022, eventised_observations, init_event=2898)
+```
+When making a request to the `pl` database, the request is broken up into 10 seperate requests according to pressure level in order to respect ERA5's limits on dataset size.
+
+Below is an example of the output for a request submitted to the [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) dataset covering all events of year 2022. The total size of the request was about 1.3GB. Note the amount of time elapsed between timestamps.
 ```
 2023-09-14 10:24:12,294 INFO Welcome to the CDS
 2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
@@ -138,6 +153,7 @@ er.submit_request('sl', 2022, eventised_observations, init_event=2898)
 # request data from the ERA5 'reanalysis-era5-single-levels' ('pl') for year 2022
 er.submit_request('pl', 2022, eventised_observations, init_event=2898)
 ```
+<!--
 ---
 ### Details on ERA5 data
 
@@ -167,7 +183,7 @@ where `boundary_dist` the spatial window given in radians calculated using:
 boundary_distance = event_spatial_window / (2 * earth_rad)  # spatial window in radians around reports for training data
 ```
 and where `event_spatial_window` and `earth_rad` are defined in `km` in `constants_and_variables`. 
-
+-->
 ---
 ## Creating datasets for machine-learning
 Opening the `.h5` files acquired from ERA5 may require installing additional dependencies to `Xarray`. I use `PyCharm` on
