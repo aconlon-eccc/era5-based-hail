@@ -68,10 +68,40 @@ for instructions on installing your unique CDS API key.
 
 ---
 ### ERA5 datasets
-We downloaded from the two datasets:
+In this workflow we download from the two ERA5 datasets:
 [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
 and 
-[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) which I abbreviated to `sl` and `pl`, respectively.
+[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) which I abbreviated to `sl` and `pl`, respectively. The variables we download from the `sl` dataset are:
+```python
+# variables requested when submitting an ERA5 request from the 'reanalysis-era5-single-levels' dataset
+single_level_variables = [
+            '10m_u_component_of_wind',
+            '10m_v_component_of_wind',
+            '2m_temperature',
+            '2m_dewpoint_temperature',
+            'surface_pressure',
+            'total_column_water',
+            'total_precipitation',
+            'convective_precipitation',
+            'total_column_water_vapour',
+            'total_column_rain_water',
+            'total_column_snow_water',
+            'total_column_cloud_ice_water',
+            'total_column_cloud_liquid_water',
+            'total_cloud_cover']
+```
+and the variables download from the `pl` dataset are: 
+```python
+# variables requested when submitting an ERA5 request from the 'reanalysis-era5-pressure-levels' dataset
+pressure_level_variables = [
+            'geopotential', 
+            'relative_humidity', 
+            'temperature', 
+            'u_component_of_wind',
+            'v_component_of_wind', 
+]
+```
+accross twenty pressure levels from 300 to 1000 hPa. The code snippets above are taken from [constants_and_variables.py](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py).
 
 ---
 ### Submiting ERA5 data requests
