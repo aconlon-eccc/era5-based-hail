@@ -278,7 +278,7 @@ remaining_eight = ['event', 'year', 'start_time', 'end_time', 'latitude', 'longi
 ```
 -->
 
-### For hail size and classification
+### Create a dataset for predicting hail size and severity classification given a hail event
 Use 
 [`data_processing/create_ml_dataset.hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
 ;
@@ -304,13 +304,9 @@ to desired frequency. Note that
 [`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 is set to 5.5 hours by default because the system I use has a six hour job-time limit. You will need to find out the time limit of your system (if it has one) and set 
 [`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
-accordingly.
-
-I also included a 
-[`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
-argument. When the run-time reaches the time limit, a csv file saves the progress as-is, to a file called 
+accordingly. When the run-time reaches the time limit, a CSV file saves the progress as-is, to a file called 
 [`partial_ml_dataset.{ini_ev}__{fin_ev}.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/ml_dataset.2898_2899.csv) 
-to make sure processes are saved. The process can be picked up again by checking the partially completed csv file for the last completed event (all reports in the event were processed) and setting 
+to make sure processes are saved. The process can be picked up again by checking the partially completed CSV file for the last completed event (all reports in the event were processed) and setting 
 [`ini_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 to that event + 1.  
 
@@ -321,7 +317,7 @@ and
 , respectively. 
 
 ---
-### For hail detection
+### Datasets for hail detection from meteorological data
 #### Null-case dataset
 Use 
 [`data_processing/create_ml_dataset.null_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L275)
