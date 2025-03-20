@@ -20,15 +20,9 @@ In this README, the first section is aranged in the indended workflow to go from
 
 ---
 ## Eventise hail observation data
-Use 
-[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
-;
-```python
-def observations(file_name, destination_file_name=''):
-```
 
 We have a CSV file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
-[`integrated_canadian_hail_db.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/integrated_canadian_hail_db.csv):
+[`integrated_canadian_hail_db.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/integrated_canadian_hail_db.csv) that looks like the following:
 
 | Start | Time	| Year	| Month	| Day	| Hour	| Longitude	| Latitude	| Province Code	| Reference Object |	Hail Diameter (mm) |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -45,13 +39,11 @@ We have a CSV file containing 7000 hail reports from all over Canada between 200
 
 
 
-Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports from different
-locations. We would like to bundle reports into hail events based on the time of the report and the distances between reports - hence, 'eventise'. The function 
-[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
+Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports varying slightly in time and location. We would like to bundle reports into hail events based on the time of the report and the distances between reports - hence, 'eventise'. The function 
 ```python
 def observations(file_name, destination_file_name=''):
 ```
-does this by first ordering the observational data by `Start Time` then calculating the distance, `Cosine Distances`, between a report location and the location of the previous location. It then uses the variables `event_time_window` and `event_spatial_window` to determine wether or not a report and the next report are part of the same hail event, and assigns an event number to each report; events that are deemed to be of the same event receive the same event number;
+found here [`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18), does this by first ordering the observational data by `Start Time` then calculating the (arc) distance, `Cosine Distances`, between a report location and the location of the previous location. It then uses the variables [`event_time_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L1) and [`event_spatial_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L2) to determine wether or not a report and the next report are part of the same hail event and assigns an event number to each report; reports have overlapping time-and-space windows are deemed to be of the same event and receive the same event number;
 
 | Start | Time	| Year	| Month	| Day	| Hour	| Longitude	| Latitude	| Province Code	| Reference Object |	Hail Diameter (mm) | Cosine Distances | Event |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -65,68 +57,54 @@ does this by first ordering the observational data by `Start Time` then calculat
 |5/20/2005 | 0:41 | 2005 | 5 | 20 | 0 | -113.5 | 53.6 | AB | pea | 8.0 | 273.2833425267738 | 5 | 
 |$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|
 
-
-
-
-does this for us by adding an `Event` column to `integrated_canadian_hail_db.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
-[`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
-:
-```python
-import data_processing.eventise_data as ed
-
-eventised_hail_data = ed.observations('integrated_canadian_hail_db.csv')
-```
-
-Different reports are considered to be of the same hail event if they are within a specified time and space windows, defined in 
-[`constants_and_variables`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py)
-. Specifically, the
-[`observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
-function uses the constants 
-[`event_time_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L1), 
-[`event_spatial_window`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L2), 
-[`earth_rad`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L3), 
-and 
-[`boundary_distance`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py#L4)
-. If different time and space constants are desired, changes can be made to the 
-[`constants_and_variables`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py) 
-file, keeping in mind units. 
+The result is returned as a `pandas.DataFrame` and a CSV copy is saved under the `destination_file_name` which defaults to `eventised_obs.csv` if no file name is specified.
 
 ---
 ## ERA5 data download
 ### Install CDS API key
-Before staring anything, see 
-['How to use the CDS API'](https://cds.climate.copernicus.eu/api-how-to) 
+Before starting anything, see 
+['CDSAPI setup'](https://cds.climate.copernicus.eu/how-to-api)
 for instructions on installing your unique CDS API key.
 
 ---
 ### ERA5 datasets
-There are two datasets that we download from, 
+We downloaded from the two datasets:
 [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
 and 
-[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview)
-, which have been abbreviated to `sl` and `pl`, respectively.
+[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) which I abbreviated to `sl` and `pl`, respectively.
 
 ---
 ### Submiting ERA5 data requests
-Use 
+The function used for submitting ERA5 data download requests is: 
 [`era5_request/era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
 ;
 ```python
 def submit_request(era5_dataset, year, eventised_observations, destination_dir='', init_pressure_level=0, init_event=0, fin_event=0):
 ```
-This requires an eventised observation file created using 
-[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18)
-.
+It requires an eventised observation file created using 
+[`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) as described in section 1.i.
 
-Receiving the data you have requested from ERA5 can take some time. It depends on a couple things; how many other users
-are requesting data at that time and how much data you have requested. Your request will first be queued with other
-users, then ERA5 will run your request, and finally the download will begin. The request made by our function 
-[`era5_request.submit_request`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/era5_request/era5_request.py#L47)
-is somewhat of a greedy one; we request data for all points in time and space *between* events as well as for those for the events themselves. This ensures that we gather gathering a healthy amount of null-event data (no-hail) for training, and other future applications.
+Receiving the requested data can take some time and depends on a couple things: 
+- the number of current requests from other users
+- how much data you have requested.
 
-Below is an example of the output for a ~1.3GB request submitted to the 
-[`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) 
-ERA5 dataset for year 2022 of our hail observations, note the amount of time between timestamps of each step.
+A request goes through the following steps: 
+1. the request is put into a queue
+2. the ERA5 server then runs your request once it has reached the front of the queue - running the request can take the server some time depending on the size of your request
+3. finally, the download begins.
+
+There are few approaches we can take when it comes to submitting requests: 
+1. The granular approach: submit requests for data bound by each event;
+   - leaner data, faster data prep on the server side, smaller download sizes, but results in many queues (users can only make one request at a time) and fewer null-event data (no-hail) to build training and testing datasets.
+3. The greedy approach: submit a request data covering an entire season (year) and all event locations;
+   - more null-event data, fewer queues, but larger download sizes, and slower data prep on the server side. 
+
+From what I learned, it's faster to make a few greedy requests than it is to go the granular route - the queues can take a long time. 
+
+The `submit_request` function builds a box around the min/max lat/long and the min/max times of the reports for a given year and submits a request to the ERA5 servers for that dataset. This means we gather all data points in time and space *between* events as well as for those for the events themselves. 
+
+Below is an example of the output for a request submitted to the [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) dataset for year 2022 of our hail observations. The total size of the request was about 1.3GB. Note the amount of time elapsed between timestamps.
+
 ```
 2023-09-14 10:24:12,294 INFO Welcome to the CDS
 2023-09-14 10:24:12,294 INFO Sending request to reanalysis-era5-single-levels
