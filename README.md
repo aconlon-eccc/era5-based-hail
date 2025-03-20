@@ -101,7 +101,13 @@ pressure_level_variables = [
             'v_component_of_wind', 
 ]
 ```
-accross twenty pressure levels from 300 to 1000 hPa. The code snippets above are taken from [constants_and_variables.py](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py).
+accross twenty pressure levels from 300 to 1000 hPa: 
+```python
+# pressure levels
+lvls = ['300', '350', '400', '450', '500', '550', '600', '650', '700', '750', '775', '800', '825', '850', '875',
+        '900', '925', '950', '975', '1000']
+```
+The code snippets above are taken from [constants_and_variables.py](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py).
 
 ---
 ### Submiting ERA5 data requests
@@ -243,22 +249,23 @@ Then enter the installation command above. For more information see `Xarray`
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
-We use the ERA5 data to populate a CSV file that describes hourly conditions up to six hours before (`T-6`) and three after (`T+3`) the start time (`T`) of each hail report. The CSV file created has 1268 columns which includes location and hail severity information. Below are the variables we collect for each time step, `[T-6, T+3]` 
-
+The [`create_ml_dataset`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) functions use the ERA5 data is to compute the following meteorological values:
+```python
+# calculated indices
+indices = ['bulk_shear_0_6_km', 'bulk_shear_0_3_km', 'bulk_shear_0_1_km', 'mean_wind_1_3_km', 'lapse_rate_0_3_km',
+           'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
+```
+They also use the observational data to associate a Boolean value to each event to indicate the severity of the hail (larger than 20 cm is considered severe by default); 1 for hail size larger than 20 cm, 0 for hail size smaller or equal to 20 cm. These computed values along with the ERA5 data, and our observation data, are used to populate a CSV file. It describes hourly conditions up to six hours before (`T-6`) and three hours after (`T+3`) the start time (`T`) of each hail report, producing a table with 1268 columns.
+<!--
+Below are the variables we collect for each time step, `[T-6, T+3]` directly from the downloaded ERA5 data:
 ```python
 # pressure-level dependent variables
 plvar = ['r', 't', 'u', 'v', 'z']
 
 # single-level variables
 slvar = ['cp', 'd2m', 'sp', 't2m', 'tcc', 'tciw', 'tclw', 'tcrw', 'tcsw', 'tcw', 'tcwv', 'tp', 'u10', 'v10']
-
-# calculated indices
-indices = ['bulk_shear_0_6_km', 'bulk_shear_0_3_km', 'bulk_shear_0_1_km', 'mean_wind_1_3_km', 'lapse_rate_0_3_km',
-           'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
-
-# lightning data from hail data csv
-hail_x_data = ['LD']
 ```
+
 Recall that the `plvar` variables have a value for each pressure level in `lvls`: 
 ```python
 # pressure levels
@@ -269,6 +276,7 @@ Variables that are collected for each timestep `[T-6, T+3]` are given the suffix
 ```python
 remaining_eight = ['event', 'year', 'start_time', 'end_time', 'latitude', 'longitude', 'hail_size', 'severe']
 ```
+-->
 
 ### For hail size and classification
 Use 
