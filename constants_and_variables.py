@@ -44,8 +44,14 @@ single_level_variables = [
             'total_column_snow_water',
             'total_column_cloud_ice_water',
             'total_column_cloud_liquid_water',
-            'total_cloud_cover']
+            'total_cloud_cover',
+]
 
 # variables requested when submitting an ERA5 request from the 'reanalysis-era5-pressure-levels' dataset
-pressure_level_variables = ['geopotential', 'relative_humidity', 'temperature', 'u_component_of_wind',
-                            'v_component_of_wind', ]
+pressure_level_variables = [
+            'geopotential', 
+            'relative_humidity', 
+            'temperature', 
+            'u_component_of_wind',
+            'v_component_of_wind', 
+]
