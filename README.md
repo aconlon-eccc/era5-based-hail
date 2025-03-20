@@ -28,10 +28,46 @@ def observations(file_name, destination_file_name=''):
 ```
 
 We have a CSV file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
-[`integrated_canadian_hail_db.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/integrated_canadian_hail_db.csv)
-. Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports from different
-locations. We would like to bundle reports into hail 'events' based on the time of the report and the distances between reports - hence, 'eventise'. My function 
+[`integrated_canadian_hail_db.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/integrated_canadian_hail_db.csv):
+
+| Start | Time	| Year	| Month	| Day	| Hour	| Longitude	| Latitude	| Province Code	| Reference Object |	Hail Diameter (mm) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|
+|5/15/2005 |21:15	|2005	|5	|15	|21	|-109.37	|52.7	|SK	|pea	|8|
+|5/23/2005 |21:05	|2005	|5	|23	|21	|-104	|53.45	|SK	|pea	|8|
+|5/31/2005 |1:45	|2005	|5	|31	|1	|-118.43	|55.17	|AB	|pea	|8|
+|6/1/2005 |21:40	|2005	|6	|1	|21	|-100.38	|50.58	|MB	|pea	|8|
+|6/1/2005 |22:00	|2005	|6	|1	|22	|-100.22	|50.58	|MB	|pea	|8|
+|6/25/2005 |20:30	|2005	|6	|25	|20	|-108.1	|50.38	|SK	|quarter	|24|
+|7/3/2005 |1:20	|2005	|7	|3	|1	|-98.9	|49.2	|MB	|apple	|70|
+|7/13/2005 |23:05	|2005	|7	|13	|23	|-111.12	|52.02	|AB	|pea	|8|
+|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|
+
+
+
+Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports from different
+locations. We would like to bundle reports into hail events based on the time of the report and the distances between reports - hence, 'eventise'. The function 
 [`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
+```python
+def observations(file_name, destination_file_name=''):
+```
+does this by first ordering the observational data by `Start Time` then calculating the distance, `Cosine Distances`, between a report location and the location of the previous location. It then uses the variables `event_time_window` and `event_spatial_window` to determine wether or not a report and the next report are part of the same hail event, and assigns an event number to each report; events that are deemed to be of the same event receive the same event number;
+
+| Start | Time	| Year	| Month	| Day	| Hour	| Longitude	| Latitude	| Province Code	| Reference Object |	Hail Diameter (mm) | Cosine Distances | Event |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+|4/18/2005 | 9:15 | 2005 | 4 | 18 | 9 | -96.7 |49.72 | MB | marble | 16.0 | 0.0 | 0 |
+|5/7/2005 | 2:40 | 2005 | 5 | 7 | 2 | -113.55 | 51.65 | AB | quarter | 24.0 | 1203.5186663512313 | 1 |
+|5/15/2005 | 21:00 | 2005 | 5 | 15 | 21 | -109.47 | 53.1 | SK | pea | 8.0 | 320.40683317623564 | 2 |
+|5/15/2005 | 21:15 | 2005 | 5 | 15 | 21 | -109.37 | 52.7 | SK | pea | 8.0 | 44.980919111703585 | 2 |
+|5/17/2005 | 0:15 | 2005 | 5 | 17 | 0 | -113.05 | 53.02 | AB | dime | 18.0 | 249.57974229868645 | 3 |
+|5/19/2005 | 19:52 | 2005 | 5 | 19 | 19 | -109.53 | 54.32 | SK | nickel | 21.0 | 273.20214854901093 | 4 |
+|5/19/2005 | 19:55 | 2005 | 5 | 19 | 19 | -109.61 | 54.51 | SK | estimated 19mm | 19.0 | 21.751971807038505 | 4 |
+|5/20/2005 | 0:41 | 2005 | 5 | 20 | 0 | -113.5 | 53.6 | AB | pea | 8.0 | 273.2833425267738 | 5 | 
+|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|$\vdots$|
+
+
+
+
 does this for us by adding an `Event` column to `integrated_canadian_hail_db.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
 [`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
 :
