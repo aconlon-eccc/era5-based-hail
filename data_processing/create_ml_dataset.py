@@ -320,7 +320,7 @@ def null_ds(num_reports, sl_dir_loc='', pl_dir_loc='', destination_dir='', time_
                'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
 
     ## indicators from hail data csv
-    hail_x_data = ['LD']
+    # hail_x_data = ['LD']
     hail_y_data = ['hail_size']
 
     ## create dictionaries
@@ -336,8 +336,8 @@ def null_ds(num_reports, sl_dir_loc='', pl_dir_loc='', destination_dir='', time_
             x_dict['{}.t{}'.format(slvr, t)] = []
         for ind in indices:
             x_dict['{}.t{}'.format(ind, t)] = []
-        for hdi in hail_x_data:
-            x_dict['{}.t{}'.format(hdi, t)] = []
+        # for hdi in hail_x_data:
+        #     x_dict['{}.t{}'.format(hdi, t)] = []
 
     for y in hail_y_data:
         y_dict[y] = []
@@ -410,7 +410,7 @@ def null_ds(num_reports, sl_dir_loc='', pl_dir_loc='', destination_dir='', time_
             print('Working on null report {} of {}, at time step {} of {}'.format(null_rep + 1, num_reports, t_count + 1, len(sub_ds.time)))
 
             # insert lightning data for report
-            x_dict['LD.t{}'.format(t_count)].append(0)
+            # x_dict['LD.t{}'.format(t_count)].append(0)
 
             # flatten sliced dataset
             DA = sub_ds.sel(time=t)
