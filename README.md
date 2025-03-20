@@ -1,7 +1,9 @@
 # era5-based-hail
-Hail prediction using machine learning trained on ERA5 data.
+Hail prediction using machine learning (ML) trained on ERA5 data.
 
-In this README, the `Main workflow` section has been aranged in the indended workflow to get from hail observation data to creating a large set of meteorological data for machine-learning (ML) applications; for training and testing ML models on meteorological data to predict extreme hail events. The second section `Other functions` describes other potentially useful functions that I created while deciding the best course of action for processing data but are no longer part of my main workflow.
+In 2023 I was tasked with building a hail prediction and detection model from scratch for the High Impact Weather Research team of the Atmospheric Science and Technology directorate at Environment and Climate Change Canada. My task was heavy; organize our observational data, retrieve, clean and organize large datasets from ECMWF for training and testing, choosing ML models to build, and being responsible for the design of every aspect of my approach along the way. This repository contains all the relevant code that I wrote to accomplish my task, complete with examples.
+
+In this README, the first section is aranged in the indended workflow to go from unorganized hail observation data to having structured observational data and large meteorological datasets for ML training and testing. The second section describes potentially useful functions that I created in my exploratory phase of processing data but that are no longer part of my main workflow.
 
 ---
 ## Table of contents
