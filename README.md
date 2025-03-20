@@ -28,17 +28,17 @@ def observations(file_name, destination_file_name=''):
 ```
 
 We have a CSV file containing 7000 hail reports from all over Canada between 2005 and 2022 called 
-[`hail_db_with_LD.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/hail_db_with_LD.csv)
+[`integrated_canadian_hail_db.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/integrated_canadian_hail_db.csv)
 . Some of these reports are from the same hail event, that is, a single hail storm produces multiple reports from different
 locations. We would like to bundle reports into hail 'events' based on the time of the report and the distances between reports - hence, 'eventise'. My function 
 [`data_processing/eventise_data.observations`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L18) 
-does this for us by adding an `Event` column to `hail_db_with_LD.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
+does this for us by adding an `Event` column to `integrated_canadian_hail_db.csv` and saving the result as `eventised_obs.csv`. The result filename can be specified by the user by specifying `destination_file_name`. This function also returns the result as a `pandas.DataFrame`. I have provided the example
 [`examples/eventise_observations_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/eventise_observations_ex.py)
 :
 ```python
 import data_processing.eventise_data as ed
 
-eventised_hail_data = ed.observations('hail_db_with_LD.csv')
+eventised_hail_data = ed.observations('integrated_canadian_hail_db.csv')
 ```
 
 Different reports are considered to be of the same hail event if they are within a specified time and space windows, defined in 
