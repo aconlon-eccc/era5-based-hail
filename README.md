@@ -3,19 +3,19 @@ Hail prediction using machine learning (ML) trained on ERA5 data.
 
 In 2023 I was tasked with building a hail prediction and detection model from scratch for the High Impact Weather Research team of the Atmospheric Science and Technology directorate at Environment and Climate Change Canada. My task was heavy; organize our observational data, retrieve, clean and organize large datasets from ECMWF for training and testing, choosing ML models to build, and being responsible for the design of every aspect of my approach along the way. This repository contains all the relevant code that I wrote to accomplish my task, complete with examples.
 
-In this README, the first section is aranged in the indended workflow to go from unorganized hail observation data to having structured observational data and large meteorological datasets for ML training and testing. The second section describes potentially useful functions that I created in my exploratory phase of processing data but that are no longer part of my main workflow.
+This README is aranged in the indended workflow to go from unorganized hail observation data to having structured observational data and large meteorological datasets for ML training and testing.
 
 ---
 ## Table of contents
- 1. Main workflow 
-     1. [Eventise hail observations](#eventise-hail-observation-data)
-     2. [ERA5 data download](#era5-data-download)
-         1. [Install CDS API key](#install-cds-api-key)
-         2. [ERA5 datasets](#era5-datasets)
-         3. [Submiting ERA5 data requests](#submiting-era5-data-requests)
-     3. Create machine-learning datasets
- 2. Other functions
-     1. Eventise ERA5 data
+### The Workflow 
+1. [Eventise hail observations](#eventise-hail-observation-data)
+2. [ERA5 data download](#era5-data-download)
+   1. [Install CDS API key](#install-cds-api-key)
+   2. [ERA5 datasets](#era5-datasets)
+   3. [Submiting ERA5 data requests](#submiting-era5-data-requests)
+3. [Create datasets for machine-learning](#creating-datasets-for-machine-learning)
+   1. [Dataset for hail-size prediction](#dataset-for-hail-size-prediction)
+   2. [Datasets for hail detection from meteorological data](#datasets-for-hail-detection-from-meteorological-data)
 
 ---
 ## Eventise hail observation data
@@ -286,8 +286,8 @@ Variables that are collected for each timestep `[T-6, T+3]` are given the suffix
 remaining_eight = ['event', 'year', 'start_time', 'end_time', 'latitude', 'longitude', 'hail_size', 'severe']
 ```
 -->
-
-### Create a dataset for predicting hail size and severity classification given a hail event
+---
+### Dataset for hail-size prediction
 #### Hail dataset
 Use the function
 [`hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) 
@@ -326,28 +326,31 @@ and
 [`fin_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 , respectively. 
 
+`hail_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `ml_hail_dataset.{ini_ev}_{fin_ev}.csv`.
+
 ---
 ### Datasets for hail detection from meteorological data
 #### Null-case dataset
-Use 
-[`data_processing/create_ml_dataset.null_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L275)
-;
+Use the function
+[`null_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L275)
+:
 ```python
 def null_ds(num_reports, sl_dir_loc='', pl_dir_loc='', destination_dir='', time_limit=5.5, save_freq=50)
 ```
 
-The `null_ds` function randomly samples a `latitude`, a `longitude`, and a consecutive set of ten timestamps from the single-level ERA5 NetCDF through the user-provided `sl_file_path`. It then creates sub-datasets of the single-level and pressure-level ERA5 data using the randomly sampled information and merges these sub-datasets. The merged sub-dataset is used to fill-in a dataframe with the same columns as the one in `hail_ds` (see above). The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` saves it's progress according to `save_freq`,  as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir`, and has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
+The `null_ds` function works similarly to `hail_ds` in that it returns a dataframe where each row describes the meteorological conditions at a point in space over a 10 hour time window. To create a null-report it randomly samples a lat-long and ten consecutive timestamps from within ERA5 data we downloaded. The attribute `num_reports` lets the user specify how many null-case reports they would like to create. Similar to `hail_ds`, `null_ds` periodically saves it's progress in a CSV file called as `partial_null_ml_dataset.{num_reports}.csv` in `destination_dir` according to `save_freq`, and it has a `time_limit` variable for those of us with run-time limits on our machines. `null_ds` returns the dataframe when finished and saves the final dataframe as a CSV file called `null_ml_dataset.{num_reports}.csv`.
 
 ---
-#### Full dataset (hail & null cases)
-Use
-[`data_processing/create_ml_dataset.full_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L518)
-;
+#### Full dataset - combined hail and null cases
+Use the function
+[`full_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L518)
+:
 ```python
 def full_ds(num_reports, sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', ini_year=0, fin_year=0, ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50)
 ```
-The `full_ds` function combines `hail_ds` and `null_ds` functions to create a dataset of both hail and null cases. It returns the dataset as a `pandas.DataFrame` when finished and saves the full dataset as `full_ml_dataset{num_reports}.csv` in `destination_dir`, where `num_reports` is the number of null-cases. 
+The `full_ds` function first runs `hail_ds` then `null_ds` and combines the resulting dataframes into a single dataframe. The combined dataframe is returned and saved as a CSV file called `full_ml_dataset{num_reports}.csv` in `destination_dir`, where `num_reports` is the number of null-cases.
 
+<!--
 ---
 ## Other functions
 ### Eventise ERA5 data
@@ -368,5 +371,6 @@ into events according to the events we created for the hail reports in the
 example. The data surrounding an event in the single-level and pressure-level ERA5 data are merged into a single event file and saved to a directory called 'era5_{year}.by_event'. A parent directory to 'era5_{year}.by_event' can be specified by using the argument 'destination_dir_path' of the 
 [`data_processing/eventise_data.era5`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/eventise_data.py#L93) 
 function.
+-->
 
 
