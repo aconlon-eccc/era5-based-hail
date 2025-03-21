@@ -13,7 +13,6 @@ In this README, the first section is aranged in the indended workflow to go from
          1. [Install CDS API key](#install-cds-api-key)
          2. [ERA5 datasets](#era5-datasets)
          3. [Submiting ERA5 data requests](#submiting-era5-data-requests)
-         4. [Details on ERA5 data](#details-on-era5-data)
      3. Create machine-learning datasets
  2. Other functions
      1. Eventise ERA5 data
@@ -69,9 +68,12 @@ for instructions on installing your unique CDS API key.
 ---
 ### ERA5 datasets
 In this workflow we download from the two ERA5 datasets:
-[`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
-and 
-[`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview) which I abbreviated to `sl` and `pl`, respectively. The variables we download from the `sl` dataset are:
+1. [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
+2. [`reanalysis-era5-pressure-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=overview)
+
+which I abbreviated to `sl` and `pl`, respectively. 
+
+The variables we download from the `sl` dataset are the following:
 ```python
 # variables requested when submitting an ERA5 request from the 'reanalysis-era5-single-levels' dataset
 single_level_variables = [
@@ -90,7 +92,8 @@ single_level_variables = [
             'total_column_cloud_liquid_water',
             'total_cloud_cover']
 ```
-and the variables download from the `pl` dataset are: 
+
+The variables downloaded from the `pl` dataset are listed below and obtained accross 20 different pressure levels: 
 ```python
 # variables requested when submitting an ERA5 request from the 'reanalysis-era5-pressure-levels' dataset
 pressure_level_variables = [
@@ -100,14 +103,12 @@ pressure_level_variables = [
             'u_component_of_wind',
             'v_component_of_wind', 
 ]
-```
-accross twenty pressure levels from 300 to 1000 hPa: 
-```python
+
 # pressure levels
 lvls = ['300', '350', '400', '450', '500', '550', '600', '650', '700', '750', '775', '800', '825', '850', '875',
         '900', '925', '950', '975', '1000']
 ```
-The code snippets above are taken from [constants_and_variables.py](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py).
+The code snippets above can be found in [constants_and_variables.py](https://github.com/aconlon-eccc/era5-based-hail/blob/master/constants_and_variables.py).
 
 ---
 ### Submiting ERA5 data requests
@@ -153,7 +154,7 @@ er.submit_request('sl', 2022, eventised_observations, init_event=2898)
 # request data from the ERA5 'reanalysis-era5-pressure-levels' ('pl') for year 2022
 er.submit_request('pl', 2022, eventised_observations, init_event=2898)
 ```
-When making a request to the `pl` database, the request is broken up into 10 seperate requests according to pressure level in order to respect ERA5's limits on dataset size.
+When making a request to the `pl` database, the request is broken up into 10 seperate requests according to pressure levels in order to respect ERA5's limits on dataset size.
 
 Below is an example of the output for a request submitted to the [`reanalysis-era5-single-levels`](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview) dataset covering all events of year 2022. The total size of the request was about 1.3GB. Note the amount of time elapsed between timestamps.
 ```
@@ -249,7 +250,15 @@ Then enter the installation command above. For more information see `Xarray`
 [installation](https://docs.xarray.dev/en/latest/getting-started-guide/installing.html)
 .
 
-The [`create_ml_dataset`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) functions use the ERA5 data is to compute the following meteorological values:
+The [`create_ml_dataset.py`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) file contains three main functions:
+- `hail_ds`;
+  - returns a dataframe with meteorological data associated to each hail report in the observational data.
+- `null_ds`;
+  - returns a dataframe with meteorological data associated periods of no hail according to our observational data.
+- `full_ds`;
+  - runs `hail_ds` and `null_ds`, and combines the results into a single dataframe.
+
+functions use the ERA5 data to compute the following meteorological values:
 ```python
 # calculated indices
 indices = ['bulk_shear_0_6_km', 'bulk_shear_0_3_km', 'bulk_shear_0_1_km', 'mean_wind_1_3_km', 'lapse_rate_0_3_km',
