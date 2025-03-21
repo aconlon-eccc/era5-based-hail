@@ -258,13 +258,13 @@ The [`create_ml_dataset.py`](https://github.com/aconlon-eccc/era5-based-hail/blo
 - `full_ds`;
   - runs `hail_ds` and `null_ds`, and combines the results into a single dataframe.
 
-functions use the ERA5 data to compute the following meteorological values:
+The functions use the ERA5 data to compute the following meteorological values nd include them in the returned dataframes:
 ```python
 # calculated indices
 indices = ['bulk_shear_0_6_km', 'bulk_shear_0_3_km', 'bulk_shear_0_1_km', 'mean_wind_1_3_km', 'lapse_rate_0_3_km',
            'lapse_rate_2_6_km', 'wet_bulb_temperature_0_deg_height', 'cape', 'cin', 'cape_depth_90', 'cin_depth_90']
 ```
-They also use the observational data to associate a Boolean value to each event to indicate the severity of the hail (larger than 20 cm is considered severe by default); 1 for hail size larger than 20 cm, 0 for hail size smaller or equal to 20 cm. These computed values along with the ERA5 data, and our observation data, are used to populate a CSV file. It describes hourly conditions up to six hours before (`T-6`) and three hours after (`T+3`) the start time (`T`) of each hail report, producing a table with 1268 columns.
+They also use the hail size in the observational data to associate a Boolean value to each event to indicate wether or not it is a severe hail event (larger than 20 cm is considered severe by default); 1 for hail size larger than 20 cm, 0 for hail size smaller or equal to 20 cm. These computed values along with the ERA5 data, and our observational data, populate dataframe file. Each row describes hourly conditions up to six hours before (`T-6`) and three hours after (`T+3`) the start time (`T`) of each hail report, producing a table with 1268 columns.
 <!--
 Below are the variables we collect for each time step, `[T-6, T+3]` directly from the downloaded ERA5 data:
 ```python
@@ -288,26 +288,27 @@ remaining_eight = ['event', 'year', 'start_time', 'end_time', 'latitude', 'longi
 -->
 
 ### Create a dataset for predicting hail size and severity classification given a hail event
-Use 
-[`data_processing/create_ml_dataset.hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
-;
+#### Hail dataset
+Use the function
+[`hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py) 
+:
 ```python
 def hail_ds(sl_dir_loc='', pl_dir_loc='', obs_file_path='', destination_dir='', ini_year=0, fin_year=0, ini_ev=0, fin_ev=0, time_limit=5.5, severe=20, save_freq=50)
 ```
 
 The example 
-[`examples/create_hail_ml_dataset_ex`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_hail_ml_dataset_ex.py) 
+[`create_hail_ml_dataset_ex.py`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/create_hail_ml_dataset_ex.py) 
 is shown here:
 ```python
 import data_processing.create_ml_dataset as cd
 cd.hail_ds(ini_ev=2898)
 ```
 
-Building the CSV file for all 7000 hail reports is a long process, so 
+Building the dataframe for all 7000 hail reports is a long process, so 
 [`hail_ds`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py)
-saves its progress to a csv file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' in the user-specified directory 
+saves its progress to a CSV file called 'partial_ml_dataset.{ini_ev}_{fin_ev}.csv' in the user-specified directory 
 [`destination_dir`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
-for every 50 reports it processes. To change the frequency at which progress is saved, set the argument
+for every 50 reports it processes in case of a process interuption (disconnection, corrupt data, etc.). To change the frequency at which progress is saved, set the argument
 [`save_freq`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13)
 to desired frequency. Note that 
 [`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
@@ -315,7 +316,7 @@ is set to 5.5 hours by default because the system I use has a six hour job-time 
 [`time_limit`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 accordingly. When the run-time reaches the time limit, a CSV file saves the progress as-is, to a file called 
 [`partial_ml_dataset.{ini_ev}__{fin_ev}.csv`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/examples/ml_dataset.2898_2899.csv) 
-to make sure processes are saved. The process can be picked up again by checking the partially completed CSV file for the last completed event (all reports in the event were processed) and setting 
+to make sure processes are saved. The process can be picked up again by checking the partially completed CSV file for the last event that was completely processed and setting 
 [`ini_ev`](https://github.com/aconlon-eccc/era5-based-hail/blob/master/data_processing/create_ml_dataset.py#L13) 
 to that event + 1.  
 
